@@ -162,7 +162,9 @@
             border-radius: 8px;
             border-left: 4px solid #bdc3c7;
             margin-bottom: 15px;
-            white-space: pre-wrap;
+            /* 불필요한 줄바꿈과 여백을 자동으로 압축해주는 속성 */
+            white-space: normal;
+            word-break: keep-all;
             line-height: 1.6;
         }
 
@@ -270,8 +272,9 @@
                 <span id="dispFuncArea"
                     style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">영역</span>
             </div>
+
             <div class="section-title">기사 제목 및 참고자료</div>
-            <div class="answer-box" style="white-space: normal;">
+            <div class="answer-box">
                 <div style="margin-bottom: 12px; font-size: 1.1em;"><strong id="dispTitle">제목 들어갈 자리</strong></div>
                 <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 5px;">[참고자료]</div>
                 <div style="margin-bottom: 3px;">1. <span id="dispRef1"></span></div>
@@ -279,25 +282,32 @@
                 <div>3. <span id="dispRef3"></span></div>
             </div>
 
-
             <div class="section-title">주제 선정 이유 및 설명</div>
             <div class="answer-box" id="dispReason"></div>
+
             <div class="section-title">실생활 데이터 및 산출된 함수식</div>
             <div class="answer-box">
                 <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
                 <strong>함수식:</strong>
                 <div id="dispFormula"
-                    style="font-size: 1.2em; text-align: center; padding: 10px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
+                    style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.3em; letter-spacing: 1px; text-align: center; padding: 15px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
                 </div>
             </div>
+
             <div class="section-title">관찰 및 데이터 해석</div>
             <div class="answer-box">
-                <strong>(1) 그래프의 수학적 특징</strong><br>
-                <div id="dispObs1" style="margin-top:5px; margin-bottom: 15px;"></div>
-                <strong>(2) 실세계 현상 해석</strong><br>
-                <div id="dispObs2" style="margin-top:5px; margin-bottom: 15px;"></div>
-                <strong>(3) 수학적 유용성 및 가치 성찰</strong><br>
-                <div id="dispObs3" style="margin-top:5px;"></div>
+                <div style="margin-bottom: 18px;">
+                    <strong style="color: var(--primary);">(1) 그래프의 수학적 특징</strong>
+                    <div id="dispObs1" style="margin-top: 5px; color: #444;"></div>
+                </div>
+                <div style="margin-bottom: 18px;">
+                    <strong style="color: var(--primary);">(2) 실세계 현상 해석</strong>
+                    <div id="dispObs2" style="margin-top: 5px; color: #444;"></div>
+                </div>
+                <div>
+                    <strong style="color: var(--primary);">(3) 수학적 유용성 및 가치 성찰</strong>
+                    <div id="dispObs3" style="margin-top: 5px; color: #444;"></div>
+                </div>
             </div>
 
             <div class="grading-inputs">
@@ -321,9 +331,9 @@
             <div id="debugArea"></div>
         </div>
     </div>
+
     <script src="config.js"></script>
     <script>
-        // 💡 핵심 변경점: 파라미터(?sheet=...)를 모두 지우고 기본 URL 하나만 씁니다.
         const FETCH_URL = BASE_SCRIPT_URL;
 
         let currentSubmissions = [];
@@ -352,18 +362,15 @@
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
-                // 💡 [변경] 단 한 번의 요청으로 두 데이터를 묶음(Object)으로 받아옵니다.
                 const res = await fetch(FETCH_URL);
                 const allData = await res.json();
 
-                // 🚨 서버 배포가 제대로 안 되었을 때 잡아내는 안전장치
                 if (Array.isArray(allData)) {
                     alert("🚨 [오류] 구글 서버가 아직 옛날 코드로 응답하고 있습니다!\n\n구글 앱스 스크립트 화면에서 우측 상단 [배포] -> [배포 관리] -> [수정(연필)] -> [새 버전]으로 배포를 꼭 완료해 주세요!");
                     listPanel.innerHTML = '<div style="color:red; padding:20px; text-align:center;">구글 서버 코드를 새 버전으로 배포해야 작동합니다.</div>';
                     return;
                 }
 
-                // 묶음에서 데이터를 각각 꺼냅니다.
                 const subData = allData.submissions || [];
                 const statData = allData.status || [];
 
@@ -412,19 +419,21 @@
             document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
             document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
             document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
+
+            // 💡 본문 내용 매핑
             document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
             document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
-            const formulaDiv = document.getElementById('dispFormula');
-            let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
 
-            // 💡 엑셀에 세로로(엔터가 쳐져서) 저장된 텍스트의 줄바꿈을 모두 없애고 가로 한 줄로 만듭니다.
-            let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
-
-            formulaDiv.innerHTML = cleanFormula;
-            MathJax.typesetPromise([formulaDiv]);
             document.getElementById('dispObs1').innerText = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
             document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+            // 수식 가로 한 줄로 출력 패치
+            const formulaDiv = document.getElementById('dispFormula');
+            let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+            let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+            formulaDiv.innerHTML = cleanFormula;
+            MathJax.typesetPromise([formulaDiv]);
 
             document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징', 'score1']) || '';
             document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석', 'score2']) || '';
@@ -433,12 +442,10 @@
 
             calculateTotal();
 
-            // 디버깅 영역 (두 데이터 동시 출력)
             const stuNum = s['번호'];
             const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
 
             let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
-
             debugHtml += `<div style="background:#eef2f7; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 4px solid #3498db; color: #333;">`;
             debugHtml += `<strong style="color:#2c3e50; font-size:1.1em;">📝 [제출데이터] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
             for (let key in s) {
@@ -455,7 +462,7 @@
                     debugHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
                 }
             } else {
-                debugHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다. (입력 시트 확인 필요)</div>`;
+                debugHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다.</div>`;
             }
             debugHtml += `</div>`;
 
