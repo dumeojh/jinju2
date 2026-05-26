@@ -1,2 +1,3 @@
 // config.js 파일 내용
-const BASE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWWl7uK64KDQY8_v23EWXi1v3dY3XNbgeaB657yTdq5WWUu5Hfi2UqOTJFXxJacUAB/exec";
+const BASE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjUNk425tC1557x-Sh2pAFq3X5gzIGZzA4xXSz3gTZWY1kxdn7vZwnjRvuEbKMvpEu/exec";
+
