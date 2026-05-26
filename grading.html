@@ -321,9 +321,12 @@
 
     <script src="config.js"></script>
     <script>
-        // 💡 핵심 변경점: 'submissions'라는 영문 키워드로 데이터를 안전하게 요청합니다.
+        // 💡 핵심 변경점: 'submissions'와 'status' 데이터를 모두 불러옵니다.
         const FETCH_URL = BASE_SCRIPT_URL + "?sheet=submissions";
+        const FETCH_STATUS_URL = BASE_SCRIPT_URL + "?sheet=status"; // 실시간 현황 데이터 URL 추가
+
         let currentSubmissions = [];
+        let currentStatuses = []; // 실시간 현황 데이터 저장용 배열
         let selectedStudent = null;
 
         function getFuzzy(obj, possibleKeys) {
@@ -348,9 +351,18 @@
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
-                const response = await fetch(FETCH_URL);
-                const data = await response.json();
-                currentSubmissions = data.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+                // 💡 두 시트의 데이터를 동시에 불러와 속도 저하를 방지합니다.
+                const [subRes, statRes] = await Promise.all([
+                    fetch(FETCH_URL),
+                    fetch(FETCH_STATUS_URL)
+                ]);
+
+                const subData = await subRes.json();
+                const statData = await statRes.json();
+
+                currentSubmissions = subData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+                currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+
                 renderStudentList();
             } catch (error) {
                 listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:red;">데이터를 불러오지 못했습니다. 앱스 스크립트 배포 버전을 확인해 주세요.</div>';
@@ -377,8 +389,7 @@
             });
         }
 
-
-function showStudentDetail(index) {
+        function showStudentDetail(index) {
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`student-item-${index}`).classList.add('active');
 
@@ -390,8 +401,8 @@ function showStudentDetail(index) {
 
             // 1. 기본 인적사항
             document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
-            
-            // 💡 2. 본문 데이터 (영문 변수명 대비 키워드 추가)
+
+            // 2. 본문 데이터 매핑
             document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
             document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
             document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
@@ -415,14 +426,36 @@ function showStudentDetail(index) {
             document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
 
             calculateTotal();
-            
 
-            // 4. 시스템 확인용 디버깅 영역
+            // 💡 4. 시스템 확인용 디버깅 영역 (두 데이터 동시 출력)
+            const stuNum = s['번호'];
+            // 현재 학생의 번호와 일치하는 실시간 현황 데이터를 찾습니다.
+            const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
+
             let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
+
+            // [1] 제출 데이터 영역 (파란색 박스)
+            debugHtml += `<div style="background:#eef2f7; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 4px solid #3498db; color: #333;">`;
+            debugHtml += `<strong style="color:#2c3e50; font-size:1.1em;">📝 [제출데이터] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
-                debugHtml += `<strong>[${key}]</strong> : ${val} <br>`;
+                debugHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
             }
+            debugHtml += `</div>`;
+
+            // [2] 실시간 현황 영역 (주황색 박스)
+            debugHtml += `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333;">`;
+            debugHtml += `<strong style="color:#d35400; font-size:1.1em;">📊 [실시간현황] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
+            if (Object.keys(statusRecord).length > 0) {
+                for (let key in statusRecord) {
+                    let val = statusRecord[key] || "비어있음";
+                    debugHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
+                }
+            } else {
+                debugHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다. (입력 시트 확인 필요)</div>`;
+            }
+            debugHtml += `</div>`;
+
             document.getElementById('debugArea').innerHTML = debugHtml;
         }
 
