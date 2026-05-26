@@ -353,6 +353,54 @@
                 box-sizing: border-box;
             }
         }
+
+        /* 🖨️ 인쇄 전용 스타일 */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printArea,
+            #printArea * {
+                visibility: visible;
+            }
+
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 11pt;
+                margin-top: 15px;
+            }
+
+            .print-table th,
+            .print-table td {
+                border: 1px solid #000;
+                padding: 10px 5px;
+            }
+
+            .print-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: bold;
+            }
+
+            .print-title {
+                text-align: center;
+                font-size: 18pt;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: #000;
+            }
+        }
     </style>
 </head>
 
@@ -776,7 +824,76 @@
                 btn.disabled = false;
             }
         }
+        // 🖨️ 반별 채점 현황 인쇄 함수
+        function printClassStatus() {
+            if (currentSubmissions.length === 0) {
+                alert("먼저 인쇄할 학년과 반을 선택하고 [데이터 불러오기]를 눌러주세요.");
+                return;
+            }
+
+            const grade = document.getElementById('filterGrade').value;
+            const cls = document.getElementById('filterClass').value;
+
+            // 번호(연번) 순으로 정렬
+            const sortedData = [...currentSubmissions].sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
+
+            let printHtml = `
+                <div class="print-title">수학 수행평가 채점 현황 (${grade}학년 ${cls}반)</div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th width="8%">연번</th>
+                            <th width="12%">학번</th>
+                            <th width="15%">이름</th>
+                            <th width="15%">조사/재구성<br>(5점)</th>
+                            <th width="15%">현상 분석<br>(10점)</th>
+                            <th width="15%">가치 제시<br>(5점)</th>
+                            <th width="12%">총점<br>(20점)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedData.forEach(student => {
+                const num = student['번호'] || '';
+                // 학번이 시트에 없으면 학년+반+번호로 조합 (예: 2학년 3반 5번 -> 20305)
+                let hakbun = getFuzzy(student, ['학번']);
+                if (!hakbun && num) {
+                    hakbun = `${grade}${cls.padStart(2, '0')}${String(num).padStart(2, '0')}`;
+                }
+                const name = student['이름'] || '';
+
+                // 항목별 점수 가져오기 (메모리에 있는 값 우선, 없으면 시트 원본 값)
+                const sc1 = student['score1'] || getFuzzy(student, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const sc2 = student['score2'] || getFuzzy(student, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const sc3 = student['score3'] || getFuzzy(student, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const total = student['총점'] || getFuzzy(student, ['총점', '총점(20점)', 'totalScore']) || '';
+
+                printHtml += `
+                    <tr>
+                        <td>${num}</td>
+                        <td>${hakbun}</td>
+                        <td>${name}</td>
+                        <td>${sc1}</td>
+                        <td>${sc2}</td>
+                        <td>${sc3}</td>
+                        <td><strong>${total}</strong></td>
+                    </tr>
+                `;
+            });
+
+            printHtml += `</tbody></table>`;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHtml;
+            printArea.style.display = 'block'; // 인쇄를 위해 임시로 활성화
+
+            window.print(); // 브라우저 인쇄 창 호출
+
+            printArea.style.display = 'none'; // 인쇄 완료/취소 후 다시 숨김
+        }
     </script>
+    <div id="printArea" style="display: none;"></div>
 </body>
 
 </html>
