@@ -703,21 +703,24 @@
                     classData[c] = subData.filter(row => String(row['학년']) === grade && String(row['반']) === c);
 
                     classData[c].forEach(student => {
-                        // 🌟 핵심 해결: 방금 전 화면에서 채점하여 메모리에 남아있는 점수가 있다면 가장 우선적으로 적용 (서버 반영 지연 완벽 해결)
-                        const localUpdated = currentSubmissions.find(s => String(s['반']) === String(student['반']) && String(s['번호']) === String(student['번호']));
-                        if (localUpdated && localUpdated['총점']) {
-                            student['총점'] = localUpdated['총점'];
-                        }
-
+                        // (중략...)
                         const num = parseInt(student['번호']) || 0;
                         if (num > maxStudentNum) maxStudentNum = num;
                     });
                 });
 
+                // 💡 이 코드를 추가합니다. (최대 40번까지만 표시되도록 제한)
+                if (maxStudentNum > 40) maxStudentNum = 40;
+
                 if (maxStudentNum === 0) {
                     tableContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#7f8c8d;">해당 학년의 데이터가 없습니다.</div>';
                     return;
                 }
+
+
+
+
+
 
                 let html = `<table class="status-table">`;
                 html += `<thead><tr><th rowspan="2" class="class-divider">연번</th>`;
