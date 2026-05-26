@@ -458,6 +458,61 @@
             border-radius: 8px;
             cursor: pointer;
         }
+
+        /* 🖨️ 인쇄 전용 스타일 */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printArea,
+            #printArea * {
+                visibility: visible;
+            }
+
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            /* 👇👇 여기서부터 새로 추가 및 수정 👇👇 */
+            @page {
+                size: landscape;
+                /* 전체반 출력 시 가로 방향 인쇄 권장 */
+            }
+
+            .status-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 9pt;
+                /* 가로로 길어서 글자 크기를 약간 줄임 */
+                margin-top: 15px;
+            }
+
+            .status-table th,
+            .status-table td {
+                border: 1px solid #000 !important;
+                padding: 6px 2px;
+            }
+
+            .status-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: bold;
+            }
+
+            .status-table .class-divider {
+                border-right: 2px solid #000 !important;
+            }
+
+            /* 👆👆 여기까지 새로 추가 👆👆 */
+
+            .print-table {
+                /* ... 기존 코드 그대로 유지 ... */
     </style>
 </head>
 
@@ -1073,6 +1128,9 @@
             <h3>🖨️ 무엇을 인쇄할까요?</h3>
             <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
             <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 학생 개별 답안 인쇄</button>
+
+            <button class="print-option-btn" style="background:#e8f4fd; border-color:#3498db;"
+                onclick="printAllClassesStatus()">🏫 전체 반 채점 결과 인쇄</button>
             <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
         </div>
     </div>
