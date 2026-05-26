@@ -203,7 +203,6 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
-        /* 디버깅 박스 스타일 */
         #debugArea {
             margin-top: 40px;
             padding: 15px;
@@ -231,7 +230,6 @@
 </head>
 
 <body>
-
     <div class="header">
         <h1>✅ 함수 기사문 채점 시스템</h1>
         <div class="filter-group">
@@ -248,6 +246,13 @@
                 <option value="3">3반</option>
                 <option value="4">4반</option>
                 <option value="5">5반</option>
+                <option value="6">6반</option>
+                <option value="7">7반</option>
+                <option value="8">8반</option>
+                <option value="9">9반</option>
+                <option value="10">10반</option>
+                <option value="11">11반</option>
+                <option value="12">12반</option>
             </select>
             <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
         </div>
@@ -257,10 +262,7 @@
         <div class="student-list-panel" id="studentListPanel">
             <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
         </div>
-
-        <div class="empty-state" id="emptyState">
-            👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.
-        </div>
+        <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.</div>
 
         <div class="grading-panel" id="gradingPanel">
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -273,14 +275,10 @@
             <div class="answer-box">
                 <strong id="dispTitle">제목 들어갈 자리</strong><br><br>
                 <small style="color:#7f8c8d;">[참고자료]</small><br>
-                1. <span id="dispRef1"></span><br>
-                2. <span id="dispRef2"></span><br>
-                3. <span id="dispRef3"></span>
+                1. <span id="dispRef1"></span><br>2. <span id="dispRef2"></span><br>3. <span id="dispRef3"></span>
             </div>
-
             <div class="section-title">주제 선정 이유 및 설명</div>
             <div class="answer-box" id="dispReason"></div>
-
             <div class="section-title">실생활 데이터 및 산출된 함수식</div>
             <div class="answer-box">
                 <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
@@ -289,7 +287,6 @@
                     style="font-size: 1.2em; text-align: center; padding: 10px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
                 </div>
             </div>
-
             <div class="section-title">관찰 및 데이터 해석</div>
             <div class="answer-box">
                 <strong>(1) 그래프의 수학적 특징</strong><br>
@@ -311,12 +308,10 @@
                 <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;"><label><strong>총점
                             (50점)</strong></label><input type="number" id="totalScore" readonly
                         style="background:#eee;"></div>
-
                 <label
                     style="font-weight:bold; color:var(--primary); display:block; margin-top:15px; margin-bottom:5px;">교사
                     피드백 (선택)</label>
                 <textarea id="teacherFeedback" rows="3" placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
-
                 <button class="btn btn-save" onclick="saveGrade()">채점 결과 저장</button>
             </div>
 
@@ -326,7 +321,8 @@
 
     <script src="config.js"></script>
     <script>
-        const FETCH_URL = BASE_SCRIPT_URL + "?sheet=제출데이터";
+        // 💡 핵심 변경점: 'submissions'라는 영문 키워드로 데이터를 안전하게 요청합니다.
+        const FETCH_URL = BASE_SCRIPT_URL + "?sheet=submissions";
         let currentSubmissions = [];
         let selectedStudent = null;
 
@@ -357,7 +353,7 @@
                 currentSubmissions = data.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
                 renderStudentList();
             } catch (error) {
-                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:red;">데이터를 불러오지 못했습니다. 앱스 스크립트 코드 확인이 필요합니다.</div>';
+                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:red;">데이터를 불러오지 못했습니다. 앱스 스크립트 배포 버전을 확인해 주세요.</div>';
             }
         }
 
@@ -415,7 +411,6 @@
 
             calculateTotal();
 
-            // 🚨 핵심: 원본 데이터 디버깅 출력
             let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
