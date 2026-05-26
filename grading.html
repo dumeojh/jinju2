@@ -767,7 +767,15 @@
             try {
                 await fetch(BASE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                 alert("✅ 채점 결과가 저장되었습니다.");
+
+                // 👇 화면(메모리)에도 저장된 세부 점수를 바로 업데이트해주는 코드 추가 👇
+                selectedStudent['score1'] = payload.score1;
+                selectedStudent['score2'] = payload.score2;
+                selectedStudent['score3'] = payload.score3;
+                selectedStudent['feedback'] = payload.feedback;
                 selectedStudent['총점'] = payload.totalScore;
+                // 👆 -------------------------------------------------------- 👆
+
                 renderStudentList();
             } catch (error) {
                 alert("❌ 저장 중 오류가 발생했습니다.");
