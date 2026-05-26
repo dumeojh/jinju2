@@ -806,13 +806,24 @@
             }
         }
 
+
         function renderStudentList() {
             const listPanel = document.getElementById('studentListPanel');
             listPanel.innerHTML = '';
+
+            // (중략 - 상단 추가 버튼 등 UI를 위해 조금 수정)
             if (currentSubmissions.length === 0) {
                 listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:#7f8c8d;">제출된 답안이 없습니다.</div>';
                 return;
             }
+
+            // 👇 전체 선택/해제 체크박스를 명단 맨 위에 하나 달아주면 편합니다 (옵션)
+            listPanel.innerHTML = `
+                <div style="padding: 10px; border-bottom: 2px solid #ddd; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes(this)" style="transform: scale(1.2); cursor: pointer;">
+                    <label for="selectAllCheckbox" style="font-weight: bold; cursor: pointer; color: var(--primary);">전체 선택 / 해제</label>
+                </div>
+            `;
 
             currentSubmissions.sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
             currentSubmissions.forEach((student, index) => {
@@ -820,10 +831,24 @@
                 item.className = 'student-item';
                 item.id = `student-item-${index}`;
                 const badge = student['총점'] ? `<span class="status-badge graded">채점완료</span>` : `<span class="status-badge">미채점</span>`;
-                item.innerHTML = `<div><strong>${student['번호']}번</strong> ${student['이름']}</div>${badge}`;
+
+                // 👇 체크박스를 포함하도록 디자인 변경
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="checkbox" class="student-checkbox" value="${index}" onclick="event.stopPropagation()" style="transform: scale(1.3); cursor: pointer;">
+                        <div><strong>${student['번호']}번</strong> ${student['이름']}</div>
+                    </div>
+                    ${badge}
+                `;
                 item.onclick = () => showStudentDetail(index);
                 listPanel.appendChild(item);
             });
+        }
+
+        // 👇 전체 선택/해제 동작을 위한 짧은 함수 (renderStudentList 함수 바로 아래에 추가)
+        function toggleAllCheckboxes(source) {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
         }
 
         function showStudentDetail(index) {
@@ -912,8 +937,13 @@
             };
 
             try {
-                await fetch(BASE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("✅ 채점 결과가 저장되었습니다.");
+                await fetch(BASE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8' // 중요: application/json 대신 text/plain 사용
+                    },
+                    body: JSON.stringify(payload)
+                });
 
                 selectedStudent['score1'] = payload.score1;
                 selectedStudent['score2'] = payload.score2;
@@ -1127,17 +1157,16 @@
 
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = printHtml;
+            printArea.style.display = 'block'; // 💡 수정됨: 수식을 계산하기 전에 인쇄 영역을 먼저 화면에 노출시킵니다.
 
             // 수식이 포함되어 있으므로 MathJax 렌더링이 끝난 후 인쇄 실행
             if (window.MathJax) {
                 MathJax.typesetPromise([printArea]).then(() => {
-                    printArea.style.display = 'block';
                     window.print();
-                    printArea.style.display = 'none';
+                    printArea.style.display = 'none'; // 인쇄 후 다시 숨김
                     closePrintModal();
                 });
             } else {
-                printArea.style.display = 'block';
                 window.print();
                 printArea.style.display = 'none';
                 closePrintModal();
@@ -1148,12 +1177,16 @@
     </script>
     <div id="printArea" style="display: none;"></div>
 
+
+
     <div class="modal-overlay" id="printModalOverlay">
         <div class="print-modal">
             <h3>🖨️ 무엇을 인쇄할까요?</h3>
             <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
-            <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 학생 개별 답안 인쇄</button>
+            <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 1명 개별 답안 인쇄</button>
 
+            <button class="print-option-btn" style="background:#fef9e7; border-color:#f1c40f;"
+                onclick="printSelectedStudents()">☑️ 선택한 학생들 연속 인쇄</button>
             <button class="print-option-btn" style="background:#e8f4fd; border-color:#3498db;"
                 onclick="printAllClassesStatus()">🏫 전체 반 채점 결과 인쇄</button>
             <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
