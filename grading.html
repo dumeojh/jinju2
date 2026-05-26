@@ -418,21 +418,22 @@
 
         /* 🖨️ 인쇄 전용 스타일 */
         @media print {
-            body * {
-                visibility: hidden;
-            }
 
-            #printArea,
-            #printArea * {
-                visibility: visible;
+            /* 인쇄 영역(#printArea)을 제외한 본문의 모든 요소를 공간까지 완전히 숨김 */
+            body>*:not(#printArea) {
+                display: none !important;
             }
 
             #printArea {
-                position: absolute;
+                display: block !important;
+                position: relative;
                 left: 0;
                 top: 0;
                 width: 100%;
+                margin: 0;
+                padding: 0;
             }
+
 
             .print-table {
                 width: 100%;
