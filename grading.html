@@ -1,1 +1,496 @@
-1
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>안성여고 수학 수행평가 채점 시스템</title>
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --success: #27ae60;
+            --warning: #e67e22;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.5em;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"],
+        textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-save {
+            background: var(--success);
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+
+        .btn-save:hover {
+            background: #219150;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* 왼쪽: 학생 리스트 */
+        .student-list-panel {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-item:hover {
+            background: #f1f4f8;
+        }
+
+        .student-item.active {
+            background: #e8f4fd;
+            border-left: 5px solid var(--accent);
+            font-weight: bold;
+        }
+
+        .status-badge {
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #eee;
+            color: #555;
+        }
+
+        .status-badge.graded {
+            background: #e9f7ef;
+            color: var(--success);
+        }
+
+        /* 오른쪽: 학생 답안 및 채점 영역 */
+        .grading-panel {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+            /* 학생을 선택하기 전에는 숨김 */
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 20px 0 10px 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .answer-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #bdc3c7;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        .grading-inputs {
+            background: #fff9e6;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #f1c40f;
+            margin-top: 30px;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .score-row label {
+            font-weight: bold;
+            color: var(--primary);
+            width: 100px;
+        }
+
+        .score-row input {
+            width: 80px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 태블릿/스마트폰 반응형 레이아웃 */
+        @media (max-width: 850px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .student-list-panel,
+            .grading-panel,
+            .empty-state {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .student-list-panel {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>✅ 함수 기사문 채점 시스템</h1>
+        <div class="filter-group">
+            <select id="filterGrade">
+                <option value="">-- 학년 --</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+            </select>
+            <select id="filterClass">
+                <option value="">-- 반 --</option>
+                <option value="1">1반</option>
+                <option value="2">2반</option>
+                <option value="3">3반</option>
+            </select>
+            <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="student-list-panel" id="studentListPanel">
+            <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+            👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.
+        </div>
+
+        <div class="grading-panel" id="gradingPanel">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                <h2 id="dispStudentInfo" style="margin:0; color:var(--primary);">1학년 1반 1번 김안성</h2>
+                <span id="dispFuncArea"
+                    style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">지수함수</span>
+            </div>
+
+            <div class="section-title">기사 제목 및 참고자료</div>
+            <div class="answer-box">
+                <strong id="dispTitle">제목 들어갈 자리</strong><br><br>
+                <small style="color:#7f8c8d;">[참고자료]</small><br>
+                1. <span id="dispRef1"></span><br>
+                2. <span id="dispRef2"></span><br>
+                3. <span id="dispRef3"></span>
+            </div>
+
+            <div class="section-title">주제 선정 이유 및 설명</div>
+            <div class="answer-box" id="dispReason"></div>
+
+            <div class="section-title">실생활 데이터 및 산출된 함수식</div>
+            <div class="answer-box">
+                <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
+                <strong>함수식:</strong>
+                <div id="dispFormula"
+                    style="font-size: 1.2em; text-align: center; padding: 10px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
+                </div>
+            </div>
+
+            <div class="section-title">관찰 및 데이터 해석</div>
+            <div class="answer-box">
+                <strong>(1) 그래프의 수학적 특징</strong><br>
+                <div id="dispObs1" style="margin-top:5px; margin-bottom: 15px;"></div>
+
+                <strong>(2) 실세계 현상 해석</strong><br>
+                <div id="dispObs2" style="margin-top:5px; margin-bottom: 15px;"></div>
+
+                <strong>(3) 수학적 유용성 및 가치 성찰</strong><br>
+                <div id="dispObs3" style="margin-top:5px;"></div>
+            </div>
+
+            <div class="grading-inputs">
+                <h3 style="margin-top:0; color:#d35400;">📝 평가 결과 입력</h3>
+                <div class="score-row">
+                    <label>내용의 타당성 (40점)</label>
+                    <input type="number" id="score1" min="0" max="40" oninput="calculateTotal()">
+                </div>
+                <div class="score-row">
+                    <label>수학적 오류 (40점)</label>
+                    <input type="number" id="score2" min="0" max="40" oninput="calculateTotal()">
+                </div>
+                <div class="score-row">
+                    <label>표현의 적절성 (20점)</label>
+                    <input type="number" id="score3" min="0" max="20" oninput="calculateTotal()">
+                </div>
+                <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;">
+                    <label><strong>총점 (100점)</strong></label>
+                    <input type="number" id="totalScore" readonly style="background:#eee;">
+                </div>
+
+                <label
+                    style="font-weight:bold; color:var(--primary); display:block; margin-top:15px; margin-bottom:5px;">교사
+                    피드백 (선택)</label>
+                <textarea id="teacherFeedback" rows="3" placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
+
+                <button class="btn btn-save" onclick="saveGrade()">채점 결과 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        // 학생 제출 데이터가 있는 시트를 가리키도록 파라미터 추가 (구글 스크립트 설정에 따라 변경 필요)
+        const FETCH_URL = BASE_SCRIPT_URL + "?sheet=submissions";
+        let currentSubmissions = [];
+        let selectedStudent = null;
+
+        // 구글 시트에서 제출된 데이터 가져오기
+        async function loadSubmissions() {
+            const grade = document.getElementById('filterGrade').value;
+            const cls = document.getElementById('filterClass').value;
+            const listPanel = document.getElementById('studentListPanel');
+
+            if (!grade || !cls) {
+                alert("학년과 반을 선택해주세요.");
+                return;
+            }
+
+            listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
+
+            try {
+                // 시트에서 전체 제출 데이터 Fetch
+                const response = await fetch(FETCH_URL);
+                const data = await response.json();
+
+                // 선택한 학년/반 학생만 필터링
+                currentSubmissions = data.filter(row =>
+                    String(row['학년']) === grade && String(row['반']) === cls
+                );
+
+                renderStudentList();
+
+            } catch (error) {
+                console.error("데이터 로드 실패:", error);
+                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:red;">데이터를 불러오지 못했습니다. 선생님께 문의하세요.</div>';
+            }
+        }
+
+        // 왼쪽 패널에 학생 리스트 그리기
+        function renderStudentList() {
+            const listPanel = document.getElementById('studentListPanel');
+            listPanel.innerHTML = '';
+
+            if (currentSubmissions.length === 0) {
+                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:#7f8c8d;">제출된 답안이 없습니다.</div>';
+                return;
+            }
+
+            // 번호순 정렬
+            currentSubmissions.sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
+
+            currentSubmissions.forEach((student, index) => {
+                const item = document.createElement('div');
+                item.className = 'student-item';
+                item.id = `student-item-${index}`;
+
+                // 임시로 총점이 시트에 있으면 '채점완료'로 표시한다고 가정
+                const isGraded = student['총점'] ? true : false;
+                const badge = isGraded ? `<span class="status-badge graded">채점완료</span>` : `<span class="status-badge">미채점</span>`;
+
+                item.innerHTML = `
+                    <div><strong>${student['번호']}번</strong> ${student['이름']}</div>
+                    ${badge}
+                `;
+
+                item.onclick = () => showStudentDetail(index);
+                listPanel.appendChild(item);
+            });
+        }
+
+        // 오른쪽 패널에 학생 답안 상세 보여주기
+        function showStudentDetail(index) {
+            // 선택 하이라이트 변경
+            document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`student-item-${index}`).classList.add('active');
+
+            selectedStudent = currentSubmissions[index];
+
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('gradingPanel').style.display = 'block';
+
+            // 데이터 바인딩 (시트의 열 이름에 맞게 조정 필요)
+            document.getElementById('dispStudentInfo').innerText = `${selectedStudent['학년']}학년 ${selectedStudent['반']}반 ${selectedStudent['번호']}번 ${selectedStudent['이름']}`;
+            document.getElementById('dispFuncArea').innerText = selectedStudent['분석영역'] || selectedStudent['funcArea'] || '-';
+
+            document.getElementById('dispTitle').innerText = selectedStudent['기사제목'] || selectedStudent['articleTitle'] || '제목 없음';
+            document.getElementById('dispRef1').innerText = selectedStudent['참고1'] || selectedStudent['ref1'] || '-';
+            document.getElementById('dispRef2').innerText = selectedStudent['참고2'] || selectedStudent['ref2'] || '-';
+            document.getElementById('dispRef3').innerText = selectedStudent['참고3'] || selectedStudent['ref3'] || '-';
+
+            document.getElementById('dispReason').innerText = selectedStudent['주제설명'] || selectedStudent['reason'] || '내용 없음';
+            document.getElementById('dispDataPoints').innerText = selectedStudent['데이터'] || selectedStudent['dataPoints'] || '-';
+
+            // 수식 렌더링
+            const formulaDiv = document.getElementById('dispFormula');
+            formulaDiv.innerHTML = selectedStudent['함수식'] || selectedStudent['formula'] || '수식 없음';
+            MathJax.typesetPromise([formulaDiv]); // MathJax 새로고침
+
+            document.getElementById('dispObs1').innerText = selectedStudent['해석1'] || selectedStudent['obs1'] || '내용 없음';
+            document.getElementById('dispObs2').innerText = selectedStudent['해석2'] || selectedStudent['obs2'] || '내용 없음';
+            document.getElementById('dispObs3').innerText = selectedStudent['해석3'] || selectedStudent['obs3'] || '내용 없음';
+
+            // 기존에 저장된 점수가 있다면 불러오기
+            document.getElementById('score1').value = selectedStudent['점수1'] || '';
+            document.getElementById('score2').value = selectedStudent['점수2'] || '';
+            document.getElementById('score3').value = selectedStudent['점수3'] || '';
+            document.getElementById('teacherFeedback').value = selectedStudent['피드백'] || '';
+            calculateTotal();
+        }
+
+        // 총점 자동 계산
+        function calculateTotal() {
+            const s1 = parseInt(document.getElementById('score1').value) || 0;
+            const s2 = parseInt(document.getElementById('score2').value) || 0;
+            const s3 = parseInt(document.getElementById('score3').value) || 0;
+            document.getElementById('totalScore').value = s1 + s2 + s3;
+        }
+
+        // 채점 결과 구글 시트로 전송 (저장)
+        async function saveGrade() {
+            if (!selectedStudent) return;
+
+            const btn = document.querySelector('.btn-save');
+            btn.innerText = "저장 중...";
+            btn.disabled = true;
+
+            const payload = {
+                action: 'grade', // 스크립트에서 채점 처리를 분기하기 위한 action 값
+                grade: selectedStudent['학년'],
+                stuClass: selectedStudent['반'],
+                stuNum: selectedStudent['번호'],
+                score1: document.getElementById('score1').value,
+                score2: document.getElementById('score2').value,
+                score3: document.getElementById('score3').value,
+                totalScore: document.getElementById('totalScore').value,
+                feedback: document.getElementById('teacherFeedback').value
+            };
+
+            try {
+                // doPost로 데이터 전송 (no-cors 사용 시 응답 확인은 불가하므로 성공으로 간주)
+                await fetch(BASE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                });
+
+                alert("✅ 채점 결과가 저장되었습니다.");
+
+                // UI 상에서 '채점완료' 뱃지 업데이트를 위한 눈속임 (새로고침 없이)
+                selectedStudent['총점'] = payload.totalScore;
+                selectedStudent['점수1'] = payload.score1;
+                selectedStudent['점수2'] = payload.score2;
+                selectedStudent['점수3'] = payload.score3;
+                selectedStudent['피드백'] = payload.feedback;
+                renderStudentList();
+
+            } catch (error) {
+                alert("❌ 저장 중 오류가 발생했습니다.");
+            } finally {
+                btn.innerText = "채점 결과 저장";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
