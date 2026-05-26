@@ -147,7 +147,6 @@
             display: none;
         }
 
-        /* 아코디언 스타일 설정 */
         .custom-accordion {
             background: white;
             border: 1px solid #ddd;
@@ -165,7 +164,6 @@
             color: var(--primary);
             cursor: pointer;
             list-style: none;
-            /* 기본 화살표 숨김 */
             position: relative;
             border-bottom: 1px solid transparent;
             transition: background 0.2s;
@@ -236,7 +234,8 @@
         .score-row label {
             font-weight: bold;
             color: var(--primary);
-            width: 150px;
+            width: 280px;
+            /* 명칭이 길어져 라벨 너비를 넓혔습니다 */
         }
 
         .score-row input {
@@ -301,7 +300,7 @@
 
     <div class="main-container">
         <div class="student-list-panel" id="studentListPanel">
-            <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
+            <div style="text-align:center; color:#999; padding:20px;">학년 and 반을 선택하고<br>불러오기를 눌러주세요.</div>
         </div>
         <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.</div>
 
@@ -361,15 +360,22 @@
                 <summary>✅ 평가 결과 입력</summary>
                 <div class="accordion-content">
                     <div class="grading-inputs">
-                        <div class="score-row"><label>수학적 특징 (20점)</label><input type="number" id="score1" min="0"
-                                max="20" oninput="calculateTotal()"></div>
-                        <div class="score-row"><label>현상 해석 (20점)</label><input type="number" id="score2" min="0"
-                                max="20" oninput="calculateTotal()"></div>
-                        <div class="score-row"><label>가치 성찰 (10점)</label><input type="number" id="score3" min="0"
-                                max="10" oninput="calculateTotal()"></div>
-                        <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;"><label><strong>총점
-                                    (50점)</strong></label><input type="number" id="totalScore" readonly
-                                style="background:#eee;"></div>
+                        <div class="score-row">
+                            <label>실세계 현상 조사 및 재구성하기 (5점)</label>
+                            <input type="number" id="score1" min="0" max="5" oninput="calculateTotal()">
+                        </div>
+                        <div class="score-row">
+                            <label>함수 개념을 통해 현상 분석하기 (10점)</label>
+                            <input type="number" id="score2" min="0" max="10" oninput="calculateTotal()">
+                        </div>
+                        <div class="score-row">
+                            <label>대수 개념의 유용성 가치 제시하기 (5점)</label>
+                            <input type="number" id="score3" min="0" max="5" oninput="calculateTotal()">
+                        </div>
+                        <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;">
+                            <label><strong>총점 (20점 만점)</strong></label>
+                            <input type="number" id="totalScore" readonly style="background:#eee;">
+                        </div>
 
                         <label
                             style="font-weight:bold; color:var(--primary); display:block; margin-top:15px; margin-bottom:5px;">교사
@@ -383,14 +389,12 @@
 
             <details class="custom-accordion">
                 <summary>🛠️ [제출데이터] 시트 원본</summary>
-                <div class="accordion-content" id="debugSubmissionArea">
-                </div>
+                <div class="accordion-content" id="debugSubmissionArea"></div>
             </details>
 
             <details class="custom-accordion">
                 <summary>📊 [실시간현황] 시트 원본</summary>
-                <div class="accordion-content" id="debugStatusArea">
-                </div>
+                <div class="accordion-content" id="debugStatusArea"></div>
             </details>
 
         </div>
@@ -492,21 +496,22 @@
             document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            // 수식 가로 한 줄 출력
+            // 수식 가로 한 줄 정렬
             const formulaDiv = document.getElementById('dispFormula');
             let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
             let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
             formulaDiv.innerHTML = cleanFormula;
             MathJax.typesetPromise([formulaDiv]);
 
-            document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징', 'score1']) || '';
-            document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석', 'score2']) || '';
-            document.getElementById('score3').value = getFuzzy(s, ['채점_성찰(10점)', '채점_성찰', 'score3']) || '';
+            // 💡 퍼지 매핑 키워드에 변경된 한글 컬럼 이름 추가 (과거 데이터와도 연동 가능하도록 보완)
+            document.getElementById('score1').value = getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기', '채점_특징(20점)', 'score1']) || '';
+            document.getElementById('score2').value = getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기', '채점_해석(20점)', 'score2']) || '';
+            document.getElementById('score3').value = getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기', '채점_성찰(10점)', 'score3']) || '';
             document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
 
             calculateTotal();
 
-            // 디버그 데이터: 제출데이터 원본 (3번 아코디언)
+            // 디버그 데이터: 제출데이터 원본
             let debugSubHtml = `<div style="background:#eef2f7; padding:15px; border-radius:8px; border-left: 4px solid #3498db; color: #333; font-size: 0.95em; word-break: break-all;">`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
@@ -515,7 +520,7 @@
             debugSubHtml += `</div>`;
             document.getElementById('debugSubmissionArea').innerHTML = debugSubHtml;
 
-            // 디버그 데이터: 실시간현황 원본 (4번 아코디언)
+            // 디버그 데이터: 실시간현황 원본
             const stuNum = s['번호'];
             const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
             let debugStatHtml = `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333; font-size: 0.95em; word-break: break-all;">`;
