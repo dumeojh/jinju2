@@ -354,53 +354,6 @@
             }
         }
 
-        /* 🖨️ 인쇄 전용 스타일 */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #printArea,
-            #printArea * {
-                visibility: visible;
-            }
-
-            #printArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-
-            .print-table {
-                width: 100%;
-                border-collapse: collapse;
-                text-align: center;
-                font-size: 11pt;
-                margin-top: 15px;
-            }
-
-            .print-table th,
-            .print-table td {
-                border: 1px solid #000;
-                padding: 10px 5px;
-            }
-
-            .print-table th {
-                background-color: #f2f2f2 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                font-weight: bold;
-            }
-
-            .print-title {
-                text-align: center;
-                font-size: 18pt;
-                font-weight: bold;
-                margin-bottom: 20px;
-                color: #000;
-            }
-        }
 
         /* 인쇄 모달 배경 */
         .modal-overlay {
@@ -477,6 +430,35 @@
                 width: 100%;
             }
 
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 11pt;
+                margin-top: 15px;
+            }
+
+            .print-table th,
+            .print-table td {
+                border: 1px solid #000;
+                padding: 10px 5px;
+            }
+
+            .print-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: bold;
+            }
+
+            .print-title {
+                text-align: center;
+                font-size: 18pt;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: #000;
+            }
+
             /* 👇👇 여기서부터 새로 추가 및 수정 👇👇 */
             @page {
                 size: landscape;
@@ -510,9 +492,7 @@
             }
 
             /* 👆👆 여기까지 새로 추가 👆👆 */
-
-            .print-table {
-                /* ... 기존 코드 그대로 유지 ... */
+        }
     </style>
 </head>
 
@@ -1005,13 +985,21 @@
 
             printHtml += `</tbody></table>`;
 
+
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = printHtml;
             printArea.style.display = 'block'; // 인쇄를 위해 임시로 활성화
 
-            window.print(); // 브라우저 인쇄 창 호출
+            // DOM 업데이트 후 인쇄 창이 뜨도록 약간의 지연 시간 부여
+            setTimeout(() => {
+                window.print();
+                printArea.style.display = 'none'; // 인쇄 완료/취소 후 다시 숨김
+                closePrintModal(); // 인쇄 후 모달창도 닫아주면 더 깔끔합니다.
+            }, 100);
 
-            printArea.style.display = 'none'; // 인쇄 완료/취소 후 다시 숨김
+
+
+
         }
         function openPrintModal() {
             document.getElementById('printModalOverlay').style.display = 'flex';
