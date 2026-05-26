@@ -1020,7 +1020,40 @@
         function closePrintModal() {
             document.getElementById('printModalOverlay').style.display = 'none';
         }
+        // 🖨️ [추가] 전체반 채점 현황 인쇄 함수
+        function printAllClassesStatus() {
+            const grade = document.getElementById('filterGrade').value;
+            const tableContainer = document.getElementById('allClassesTableContainer');
 
+            if (!grade) {
+                alert("먼저 확인하실 '학년'을 선택해주세요.");
+                return;
+            }
+
+            // 전체반 데이터가 화면에 렌더링되어 있는지 확인
+            if (!tableContainer.innerHTML || tableContainer.innerHTML.includes('데이터를 계산 중') || tableContainer.innerHTML.includes('데이터가 없습니다')) {
+                alert("먼저 상단의 [전체반 채점확인] 버튼을 눌러 데이터를 화면에 불러와주세요.");
+                return;
+            }
+
+            // 인쇄용 HTML 구성
+            let printHtml = `
+                <div class="print-title">${grade}학년 전체반 채점 현황</div>
+                ${tableContainer.innerHTML}
+            `;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHtml;
+
+            printArea.style.display = 'block'; // 인쇄 영역 활성화
+
+            // 💡 팁 알림창 띄우기 (옵션)
+            setTimeout(() => {
+                window.print();
+                printArea.style.display = 'none'; // 인쇄 완료 후 다시 숨김
+                closePrintModal(); // 모달 닫기
+            }, 100);
+        }
 
         function printIndividualStudent() {
             if (!selectedStudent) {
