@@ -318,15 +318,13 @@
             <div id="debugArea"></div>
         </div>
     </div>
-
     <script src="config.js"></script>
     <script>
-        // 💡 핵심 변경점: 'submissions'와 'status' 데이터를 모두 불러옵니다.
-        const FETCH_URL = BASE_SCRIPT_URL + "?sheet=submissions";
-        const FETCH_STATUS_URL = BASE_SCRIPT_URL + "?sheet=status"; // 실시간 현황 데이터 URL 추가
+        // 💡 핵심 변경점: 파라미터(?sheet=...)를 모두 지우고 기본 URL 하나만 씁니다.
+        const FETCH_URL = BASE_SCRIPT_URL;
 
         let currentSubmissions = [];
-        let currentStatuses = []; // 실시간 현황 데이터 저장용 배열
+        let currentStatuses = [];
         let selectedStudent = null;
 
         function getFuzzy(obj, possibleKeys) {
@@ -351,21 +349,27 @@
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
-                // 💡 두 시트의 데이터를 동시에 불러와 속도 저하를 방지합니다.
-                const [subRes, statRes] = await Promise.all([
-                    fetch(FETCH_URL),
-                    fetch(FETCH_STATUS_URL)
-                ]);
+                // 💡 [변경] 단 한 번의 요청으로 두 데이터를 묶음(Object)으로 받아옵니다.
+                const res = await fetch(FETCH_URL);
+                const allData = await res.json();
 
-                const subData = await subRes.json();
-                const statData = await statRes.json();
+                // 🚨 서버 배포가 제대로 안 되었을 때 잡아내는 안전장치
+                if (Array.isArray(allData)) {
+                    alert("🚨 [오류] 구글 서버가 아직 옛날 코드로 응답하고 있습니다!\n\n구글 앱스 스크립트 화면에서 우측 상단 [배포] -> [배포 관리] -> [수정(연필)] -> [새 버전]으로 배포를 꼭 완료해 주세요!");
+                    listPanel.innerHTML = '<div style="color:red; padding:20px; text-align:center;">구글 서버 코드를 새 버전으로 배포해야 작동합니다.</div>';
+                    return;
+                }
+
+                // 묶음에서 데이터를 각각 꺼냅니다.
+                const subData = allData.submissions || [];
+                const statData = allData.status || [];
 
                 currentSubmissions = subData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
                 currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
 
                 renderStudentList();
             } catch (error) {
-                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:red;">데이터를 불러오지 못했습니다. 앱스 스크립트 배포 버전을 확인해 주세요.</div>';
+                listPanel.innerHTML = `<div style="text-align:center; padding:20px; color:red;">데이터 로드 실패: ${error.message}</div>`;
             }
         }
 
@@ -399,10 +403,7 @@
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('gradingPanel').style.display = 'block';
 
-            // 1. 기본 인적사항
             document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
-
-            // 2. 본문 데이터 매핑
             document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
             document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
             document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
@@ -419,7 +420,6 @@
             document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            // 3. 채점 영역
             document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징', 'score1']) || '';
             document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석', 'score2']) || '';
             document.getElementById('score3').value = getFuzzy(s, ['채점_성찰(10점)', '채점_성찰', 'score3']) || '';
@@ -427,14 +427,12 @@
 
             calculateTotal();
 
-            // 💡 4. 시스템 확인용 디버깅 영역 (두 데이터 동시 출력)
+            // 디버깅 영역 (두 데이터 동시 출력)
             const stuNum = s['번호'];
-            // 현재 학생의 번호와 일치하는 실시간 현황 데이터를 찾습니다.
             const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
 
             let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
 
-            // [1] 제출 데이터 영역 (파란색 박스)
             debugHtml += `<div style="background:#eef2f7; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 4px solid #3498db; color: #333;">`;
             debugHtml += `<strong style="color:#2c3e50; font-size:1.1em;">📝 [제출데이터] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
             for (let key in s) {
@@ -443,7 +441,6 @@
             }
             debugHtml += `</div>`;
 
-            // [2] 실시간 현황 영역 (주황색 박스)
             debugHtml += `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333;">`;
             debugHtml += `<strong style="color:#d35400; font-size:1.1em;">📊 [실시간현황] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
             if (Object.keys(statusRecord).length > 0) {
