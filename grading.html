@@ -147,22 +147,73 @@
             display: none;
         }
 
+        /* 아코디언 스타일 설정 */
+        .custom-accordion {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .custom-accordion summary {
+            padding: 15px 20px;
+            font-size: 1.15em;
+            font-weight: bold;
+            background: #f8f9fa;
+            color: var(--primary);
+            cursor: pointer;
+            list-style: none;
+            /* 기본 화살표 숨김 */
+            position: relative;
+            border-bottom: 1px solid transparent;
+            transition: background 0.2s;
+        }
+
+        .custom-accordion summary:hover {
+            background: #eef2f7;
+        }
+
+        .custom-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .custom-accordion summary::after {
+            content: '▼';
+            position: absolute;
+            right: 20px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .custom-accordion[open] summary {
+            border-bottom: 1px solid #ddd;
+        }
+
+        .custom-accordion[open] summary::after {
+            content: '▲';
+        }
+
+        .accordion-content {
+            padding: 20px;
+        }
+
         .section-title {
-            font-size: 1.2em;
+            font-size: 1.15em;
             font-weight: bold;
             color: var(--accent);
-            margin: 20px 0 10px 0;
+            margin: 0 0 10px 0;
             border-bottom: 2px solid #eee;
             padding-bottom: 5px;
         }
 
         .answer-box {
-            background: #f9f9f9;
+            background: #fdfdfd;
             padding: 15px;
             border-radius: 8px;
             border-left: 4px solid #bdc3c7;
-            margin-bottom: 15px;
-            /* 불필요한 줄바꿈과 여백을 자동으로 압축해주는 속성 */
+            margin-bottom: 25px;
             white-space: normal;
             word-break: keep-all;
             line-height: 1.6;
@@ -173,7 +224,6 @@
             padding: 20px;
             border-radius: 12px;
             border: 2px solid #f1c40f;
-            margin-top: 30px;
         }
 
         .score-row {
@@ -203,17 +253,6 @@
             text-align: center;
             color: #7f8c8d;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        #debugArea {
-            margin-top: 40px;
-            padding: 15px;
-            background: #2c3e50;
-            color: #ecf0f1;
-            border-radius: 8px;
-            font-size: 0.9em;
-            line-height: 1.5;
-            word-break: break-all;
         }
 
         @media (max-width: 850px) {
@@ -267,68 +306,93 @@
         <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.</div>
 
         <div class="grading-panel" id="gradingPanel">
-            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
                 <h2 id="dispStudentInfo" style="margin:0; color:var(--primary);">학생 정보</h2>
                 <span id="dispFuncArea"
                     style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">영역</span>
             </div>
 
-            <div class="section-title">기사 제목 및 참고자료</div>
-            <div class="answer-box">
-                <div style="margin-bottom: 12px; font-size: 1.1em;"><strong id="dispTitle">제목 들어갈 자리</strong></div>
-                <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 5px;">[참고자료]</div>
-                <div style="margin-bottom: 3px;">1. <span id="dispRef1"></span></div>
-                <div style="margin-bottom: 3px;">2. <span id="dispRef2"></span></div>
-                <div>3. <span id="dispRef3"></span></div>
-            </div>
+            <details class="custom-accordion" open>
+                <summary>📝 학생 제출 답안 확인</summary>
+                <div class="accordion-content">
 
-            <div class="section-title">주제 선정 이유 및 설명</div>
-            <div class="answer-box" id="dispReason"></div>
+                    <div class="section-title">기사 제목 및 참고자료</div>
+                    <div class="answer-box">
+                        <div style="margin-bottom: 12px; font-size: 1.1em;"><strong id="dispTitle">제목 들어갈 자리</strong>
+                        </div>
+                        <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 5px;">[참고자료]</div>
+                        <div style="margin-bottom: 3px;">1. <span id="dispRef1"></span></div>
+                        <div style="margin-bottom: 3px;">2. <span id="dispRef2"></span></div>
+                        <div>3. <span id="dispRef3"></span></div>
+                    </div>
 
-            <div class="section-title">실생활 데이터 및 산출된 함수식</div>
-            <div class="answer-box">
-                <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
-                <strong>함수식:</strong>
-                <div id="dispFormula"
-                    style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.3em; letter-spacing: 1px; text-align: center; padding: 15px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
+                    <div class="section-title">주제 선정 이유 및 설명</div>
+                    <div class="answer-box" id="dispReason"></div>
+
+                    <div class="section-title">실생활 데이터 및 산출된 함수식</div>
+                    <div class="answer-box">
+                        <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
+                        <strong>함수식:</strong>
+                        <div id="dispFormula"
+                            style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.3em; letter-spacing: 1px; text-align: center; padding: 15px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
+                        </div>
+                    </div>
+
+                    <div class="section-title" style="border-bottom:none;">관찰 및 데이터 해석</div>
+                    <div class="answer-box" style="margin-bottom: 0;">
+                        <div style="margin-bottom: 18px;">
+                            <strong style="color: var(--primary);">(1) 그래프의 수학적 특징</strong>
+                            <div id="dispObs1" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                        <div style="margin-bottom: 18px;">
+                            <strong style="color: var(--primary);">(2) 실세계 현상 해석</strong>
+                            <div id="dispObs2" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--primary);">(3) 수학적 유용성 및 가치 성찰</strong>
+                            <div id="dispObs3" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+            </details>
 
-            <div class="section-title">관찰 및 데이터 해석</div>
-            <div class="answer-box">
-                <div style="margin-bottom: 18px;">
-                    <strong style="color: var(--primary);">(1) 그래프의 수학적 특징</strong>
-                    <div id="dispObs1" style="margin-top: 5px; color: #444;"></div>
-                </div>
-                <div style="margin-bottom: 18px;">
-                    <strong style="color: var(--primary);">(2) 실세계 현상 해석</strong>
-                    <div id="dispObs2" style="margin-top: 5px; color: #444;"></div>
-                </div>
-                <div>
-                    <strong style="color: var(--primary);">(3) 수학적 유용성 및 가치 성찰</strong>
-                    <div id="dispObs3" style="margin-top: 5px; color: #444;"></div>
-                </div>
-            </div>
+            <details class="custom-accordion" open>
+                <summary>✅ 평가 결과 입력</summary>
+                <div class="accordion-content">
+                    <div class="grading-inputs">
+                        <div class="score-row"><label>수학적 특징 (20점)</label><input type="number" id="score1" min="0"
+                                max="20" oninput="calculateTotal()"></div>
+                        <div class="score-row"><label>현상 해석 (20점)</label><input type="number" id="score2" min="0"
+                                max="20" oninput="calculateTotal()"></div>
+                        <div class="score-row"><label>가치 성찰 (10점)</label><input type="number" id="score3" min="0"
+                                max="10" oninput="calculateTotal()"></div>
+                        <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;"><label><strong>총점
+                                    (50점)</strong></label><input type="number" id="totalScore" readonly
+                                style="background:#eee;"></div>
 
-            <div class="grading-inputs">
-                <h3 style="margin-top:0; color:#d35400;">📝 평가 결과 입력</h3>
-                <div class="score-row"><label>수학적 특징 (20점)</label><input type="number" id="score1" min="0" max="20"
-                        oninput="calculateTotal()"></div>
-                <div class="score-row"><label>현상 해석 (20점)</label><input type="number" id="score2" min="0" max="20"
-                        oninput="calculateTotal()"></div>
-                <div class="score-row"><label>가치 성찰 (10점)</label><input type="number" id="score3" min="0" max="10"
-                        oninput="calculateTotal()"></div>
-                <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;"><label><strong>총점
-                            (50점)</strong></label><input type="number" id="totalScore" readonly
-                        style="background:#eee;"></div>
-                <label
-                    style="font-weight:bold; color:var(--primary); display:block; margin-top:15px; margin-bottom:5px;">교사
-                    피드백 (선택)</label>
-                <textarea id="teacherFeedback" rows="3" placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
-                <button class="btn btn-save" onclick="saveGrade()">채점 결과 저장</button>
-            </div>
+                        <label
+                            style="font-weight:bold; color:var(--primary); display:block; margin-top:15px; margin-bottom:5px;">교사
+                            피드백 (선택)</label>
+                        <textarea id="teacherFeedback" rows="3" placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
 
-            <div id="debugArea"></div>
+                        <button class="btn btn-save" onclick="saveGrade()">채점 결과 저장</button>
+                    </div>
+                </div>
+            </details>
+
+            <details class="custom-accordion">
+                <summary>🛠️ [제출데이터] 시트 원본</summary>
+                <div class="accordion-content" id="debugSubmissionArea">
+                </div>
+            </details>
+
+            <details class="custom-accordion">
+                <summary>📊 [실시간현황] 시트 원본</summary>
+                <div class="accordion-content" id="debugStatusArea">
+                </div>
+            </details>
+
         </div>
     </div>
 
@@ -415,12 +479,12 @@
 
             document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
             document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
+
             document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
             document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
             document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
             document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
 
-            // 💡 본문 내용 매핑
             document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
             document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
 
@@ -428,7 +492,7 @@
             document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            // 수식 가로 한 줄로 출력 패치
+            // 수식 가로 한 줄 출력
             const formulaDiv = document.getElementById('dispFormula');
             let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
             let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
@@ -442,31 +506,29 @@
 
             calculateTotal();
 
-            const stuNum = s['번호'];
-            const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
-
-            let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
-            debugHtml += `<div style="background:#eef2f7; padding:15px; border-radius:8px; margin-bottom:15px; border-left: 4px solid #3498db; color: #333;">`;
-            debugHtml += `<strong style="color:#2c3e50; font-size:1.1em;">📝 [제출데이터] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
+            // 디버그 데이터: 제출데이터 원본 (3번 아코디언)
+            let debugSubHtml = `<div style="background:#eef2f7; padding:15px; border-radius:8px; border-left: 4px solid #3498db; color: #333; font-size: 0.95em; word-break: break-all;">`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
-                debugHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
+                debugSubHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
             }
-            debugHtml += `</div>`;
+            debugSubHtml += `</div>`;
+            document.getElementById('debugSubmissionArea').innerHTML = debugSubHtml;
 
-            debugHtml += `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333;">`;
-            debugHtml += `<strong style="color:#d35400; font-size:1.1em;">📊 [실시간현황] 시트 원본</strong><hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">`;
+            // 디버그 데이터: 실시간현황 원본 (4번 아코디언)
+            const stuNum = s['번호'];
+            const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
+            let debugStatHtml = `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333; font-size: 0.95em; word-break: break-all;">`;
             if (Object.keys(statusRecord).length > 0) {
                 for (let key in statusRecord) {
                     let val = statusRecord[key] || "비어있음";
-                    debugHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
+                    debugStatHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
                 }
             } else {
-                debugHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다.</div>`;
+                debugStatHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다.</div>`;
             }
-            debugHtml += `</div>`;
-
-            document.getElementById('debugArea').innerHTML = debugHtml;
+            debugStatHtml += `</div>`;
+            document.getElementById('debugStatusArea').innerHTML = debugStatHtml;
         }
 
         function calculateTotal() {
