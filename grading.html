@@ -684,7 +684,7 @@
 
             switchPanel('allClassesPanel');
             const tableContainer = document.getElementById('allClassesTableContainer');
-            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~6반)`;
+            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~12반)`;
             tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
 
             try {
@@ -694,7 +694,8 @@
                 const allData = await res.json();
                 const subData = allData.submissions || [];
 
-                const targetClasses = ['1', '2', '3', '4', '5', '6'];
+                // 변경 후 코드
+                const targetClasses = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
                 const classData = {};
                 let maxStudentNum = 0;
 
@@ -962,22 +963,107 @@
             document.getElementById('printModalOverlay').style.display = 'none';
         }
 
-        // 개별 학생 인쇄용 빈 함수 (나중에 로직을 채워넣으시면 됩니다)
+
         function printIndividualStudent() {
             if (!selectedStudent) {
                 alert("먼저 왼쪽 명단에서 인쇄할 학생을 선택해주세요.");
                 return;
             }
-            // 여기에 개별 인쇄 로직 작성
-            closePrintModal();
+
+            const s = selectedStudent;
+
+            // 데이터 추출 (기존 getFuzzy 활용)
+            const grade = s['학년'] || '';
+            const cls = s['반'] || '';
+            const num = s['번호'] || '';
+            const name = s['이름'] || '';
+
+            const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            const dataPoints = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
+            let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+            let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+
+            const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+            const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+            const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+            // 채점 및 피드백 데이터 (메모리에 있는 수정된 값 우선)
+            const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+            const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+            const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+            const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
+            const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
+
+            // 개별 학생 인쇄용 HTML 구성
+            let printHtml = `
+        <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px;">
+            <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
+                학생 개별 답안 및 채점 결과
+            </div>
+            <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
+                <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+            </div>
+            
+            <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
+                <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
+                <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
+                <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
+                <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
+                <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
+                <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
+                <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
+            </table>
+
+            <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                ✅ 평가 결과
+            </div>
+            <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
+                <tr>
+                    <th style="text-align: center;">조사/재구성 (5점)</th>
+                    <th style="text-align: center;">현상 분석 (10점)</th>
+                    <th style="text-align: center;">가치 제시 (5점)</th>
+                    <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
+                </tr>
+                <tr>
+                    <td>${sc1}</td>
+                    <td>${sc2}</td>
+                    <td>${sc3}</td>
+                    <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 20px;">
+                <strong>📝 교사 피드백:</strong>
+                <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
+                    ${feedback.replace(/\n/g, '<br>')}
+                </div>
+            </div>
+        </div>
+    `;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHtml;
+
+            // 수식이 포함되어 있으므로 MathJax 렌더링이 끝난 후 인쇄 실행
+            if (window.MathJax) {
+                MathJax.typesetPromise([printArea]).then(() => {
+                    printArea.style.display = 'block';
+                    window.print();
+                    printArea.style.display = 'none';
+                    closePrintModal();
+                });
+            } else {
+                printArea.style.display = 'block';
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
+            }
         }
+
+
     </script>
-    <details class="custom-accordion">
-        <summary>📊 [실시간현황] 시트 원본</summary>
-        <div class="accordion-content" id="debugStatusArea"></div>
-    </details>
-    </div>
-    </div>
+    <div id="printArea" style="display: none;"></div>
 
     <div class="modal-overlay" id="printModalOverlay">
         <div class="print-modal">
@@ -987,10 +1073,7 @@
             <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
         </div>
     </div>
-    <script src="config.js"></script>
-    <script>
-        const FETCH_URL = BASE_SCRIPT_URL;
-        <div id="printArea" style="display: none;"></div>
-</body >
 
-</html >
+</body>
+
+</html>
