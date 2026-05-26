@@ -464,10 +464,7 @@
             }
 
 
-            @page {
-                size: landscape;
-                /* 전체반 출력 시 가로 방향 인쇄 권장 */
-            }
+
 
             .status-table {
                 width: 100%;
@@ -1185,7 +1182,11 @@
                 return;
             }
 
-            let combinedHtml = "";
+            let combinedHtml = `
+                <style>
+                    @page { size: portrait; margin: 15mm; } 
+                </style>
+            `;
 
             // 2. 체크된 학생들마다 인쇄용 HTML을 생성해서 합칩니다.
             checkedBoxes.forEach((box, index) => {
