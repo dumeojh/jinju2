@@ -369,12 +369,16 @@
             align-items: center;
         }
 
-        /* 인쇄 모달 창 */
         .print-modal {
             background: white;
             padding: 30px;
             border-radius: 12px;
-            width: 350px;
+            width: 90%;
+            /* 화면의 90%만 차지하도록 변경 */
+            max-width: 350px;
+            /* 최대 너비 제한 */
+            box-sizing: border-box;
+            /* 패딩 포함 크기 계산 */
             text-align: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
@@ -459,7 +463,7 @@
                 color: #000;
             }
 
-            /* 👇👇 여기서부터 새로 추가 및 수정 👇👇 */
+
             @page {
                 size: landscape;
                 /* 전체반 출력 시 가로 방향 인쇄 권장 */
@@ -491,7 +495,7 @@
                 border-right: 2px solid #000 !important;
             }
 
-            /* 👆👆 여기까지 새로 추가 👆👆 */
+
         }
     </style>
 </head>
