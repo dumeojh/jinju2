@@ -188,7 +188,7 @@
         .score-row label {
             font-weight: bold;
             color: var(--primary);
-            width: 100px;
+            width: 150px;
         }
 
         .score-row input {
@@ -308,19 +308,19 @@
             <div class="grading-inputs">
                 <h3 style="margin-top:0; color:#d35400;">📝 평가 결과 입력</h3>
                 <div class="score-row">
-                    <label>내용의 타당성 (40점)</label>
-                    <input type="number" id="score1" min="0" max="40" oninput="calculateTotal()">
+                    <label>수학적 특징 (20점)</label>
+                    <input type="number" id="score1" min="0" max="20" oninput="calculateTotal()">
                 </div>
                 <div class="score-row">
-                    <label>수학적 오류 (40점)</label>
-                    <input type="number" id="score2" min="0" max="40" oninput="calculateTotal()">
+                    <label>현상 해석 (20점)</label>
+                    <input type="number" id="score2" min="0" max="20" oninput="calculateTotal()">
                 </div>
                 <div class="score-row">
-                    <label>표현의 적절성 (20점)</label>
-                    <input type="number" id="score3" min="0" max="20" oninput="calculateTotal()">
+                    <label>가치 성찰 (10점)</label>
+                    <input type="number" id="score3" min="0" max="10" oninput="calculateTotal()">
                 </div>
                 <div class="score-row" style="border-top:1px solid #ccc; padding-top:10px;">
-                    <label><strong>총점 (100점)</strong></label>
+                    <label><strong>총점 (50점)</strong></label>
                     <input type="number" id="totalScore" readonly style="background:#eee;">
                 </div>
 
@@ -336,10 +336,28 @@
 
     <script src="config.js"></script>
     <script>
-        // 💡 선생님 요청 사항 반영: "제출데이터" 시트를 불러오도록 수정완료!
         const FETCH_URL = BASE_SCRIPT_URL + "?sheet=제출데이터";
         let currentSubmissions = [];
         let selectedStudent = null;
+
+        // 💡 핵심 추가 기능: 띄어쓰기, 줄바꿈 등 보이지 않는 기호들을 무시하고 데이터를 강제로 찾아주는 함수
+        function getFuzzy(obj, possibleKeys) {
+            // 1차 시도: 완전히 똑같은 키가 있는지 검사
+            for (let key of possibleKeys) {
+                if (obj[key] !== undefined && obj[key] !== "") return obj[key];
+            }
+            // 2차 시도: 공백(띄어쓰기, 줄바꿈 등)을 싹 다 지우고 비교
+            for (let key of possibleKeys) {
+                const cleanTarget = String(key).replace(/\s+/g, '');
+                for (let actualKey in obj) {
+                    const cleanActual = String(actualKey).replace(/\s+/g, '');
+                    if (cleanTarget === cleanActual) {
+                        if (obj[actualKey] !== undefined && obj[actualKey] !== "") return obj[actualKey];
+                    }
+                }
+            }
+            return null; // 그래도 없으면 null 반환
+        }
 
         async function loadSubmissions() {
             const grade = document.getElementById('filterGrade').value;
@@ -357,7 +375,6 @@
                 const response = await fetch(FETCH_URL);
                 const data = await response.json();
 
-                // 선택한 학년/반 학생만 필터링 (구글 시트의 열 제목에 맞게 조정 필요시 확인)
                 currentSubmissions = data.filter(row =>
                     String(row['학년']) === grade && String(row['반']) === cls
                 );
@@ -379,7 +396,6 @@
                 return;
             }
 
-            // 번호순 정렬
             currentSubmissions.sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
 
             currentSubmissions.forEach((student, index) => {
@@ -387,7 +403,6 @@
                 item.className = 'student-item';
                 item.id = `student-item-${index}`;
 
-                // 총점이 시트에 있으면 '채점완료'로 표시
                 const isGraded = student['총점'] ? true : false;
                 const badge = isGraded ? `<span class="status-badge graded">채점완료</span>` : `<span class="status-badge">미채점</span>`;
 
@@ -406,35 +421,37 @@
             document.getElementById(`student-item-${index}`).classList.add('active');
 
             selectedStudent = currentSubmissions[index];
+            const s = selectedStudent; // 코드 간소화를 위해 짧은 변수 사용
 
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('gradingPanel').style.display = 'block';
 
-            // 데이터 바인딩
-            document.getElementById('dispStudentInfo').innerText = `${selectedStudent['학년']}학년 ${selectedStudent['반']}반 ${selectedStudent['번호']}번 ${selectedStudent['이름']}`;
-            document.getElementById('dispFuncArea').innerText = selectedStudent['분석영역'] || selectedStudent['funcArea'] || '-';
+            // 💡 getFuzzy 함수를 사용해 띄어쓰기 오류가 있어도 데이터를 불러오도록 수정
+            document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
+            document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
 
-            document.getElementById('dispTitle').innerText = selectedStudent['기사제목'] || selectedStudent['articleTitle'] || '제목 없음';
-            document.getElementById('dispRef1').innerText = selectedStudent['참고1'] || selectedStudent['ref1'] || '-';
-            document.getElementById('dispRef2').innerText = selectedStudent['참고2'] || selectedStudent['ref2'] || '-';
-            document.getElementById('dispRef3').innerText = selectedStudent['참고3'] || selectedStudent['ref3'] || '-';
+            document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
+            document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
+            document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
 
-            document.getElementById('dispReason').innerText = selectedStudent['주제설명'] || selectedStudent['reason'] || '내용 없음';
-            document.getElementById('dispDataPoints').innerText = selectedStudent['데이터'] || selectedStudent['dataPoints'] || '-';
+            document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
 
             const formulaDiv = document.getElementById('dispFormula');
-            formulaDiv.innerHTML = selectedStudent['함수식'] || selectedStudent['formula'] || '수식 없음';
-            MathJax.typesetPromise([formulaDiv]); // MathJax 렌더링
+            formulaDiv.innerHTML = getFuzzy(s, ['산출된 함수식', '산출된함수식', '함수식', 'formula']) || '수식 없음';
+            MathJax.typesetPromise([formulaDiv]);
 
-            document.getElementById('dispObs1').innerText = selectedStudent['해석1'] || selectedStudent['obs1'] || '내용 없음';
-            document.getElementById('dispObs2').innerText = selectedStudent['해석2'] || selectedStudent['obs2'] || '내용 없음';
-            document.getElementById('dispObs3').innerText = selectedStudent['해석3'] || selectedStudent['obs3'] || '내용 없음';
+            document.getElementById('dispObs1').innerText = getFuzzy(s, ['(1) 수학적 특징', '(1)수학적특징', '수학적 특징']) || '내용 없음';
+            document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '(2)현상해석', '현상 해석']) || '내용 없음';
+            document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '(3)가치성찰', '가치 성찰']) || '내용 없음';
 
-            // 기존 점수 바인딩
-            document.getElementById('score1').value = selectedStudent['점수1'] || '';
-            document.getElementById('score2').value = selectedStudent['점수2'] || '';
-            document.getElementById('score3').value = selectedStudent['점수3'] || '';
-            document.getElementById('teacherFeedback').value = selectedStudent['피드백'] || '';
+            // 💡 기존 채점 점수 불러오기
+            document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징']) || '';
+            document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석']) || '';
+            document.getElementById('score3').value = getFuzzy(s, ['채점_성찰(10점)', '채점_성찰']) || '';
+            document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '교사피드백', '피드백']) || '';
+
             calculateTotal();
         }
 
@@ -473,11 +490,12 @@
 
                 alert("✅ 채점 결과가 저장되었습니다.");
 
+                // 저장 후 UI 바로 업데이트
                 selectedStudent['총점'] = payload.totalScore;
-                selectedStudent['점수1'] = payload.score1;
-                selectedStudent['점수2'] = payload.score2;
-                selectedStudent['점수3'] = payload.score3;
-                selectedStudent['피드백'] = payload.feedback;
+                selectedStudent['채점_특징(20점)'] = payload.score1;
+                selectedStudent['채점_해석(20점)'] = payload.score2;
+                selectedStudent['채점_성찰(10점)'] = payload.score3;
+                selectedStudent['교사 피드백'] = payload.feedback;
                 renderStudentList();
 
             } catch (error) {
