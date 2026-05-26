@@ -510,6 +510,7 @@
                 <option value="2">2학년</option>
                 <option value="3">3학년</option>
             </select>
+
             <select id="filterClass">
                 <option value="">-- 반 --</option>
                 <option value="1">1반</option>
@@ -518,12 +519,7 @@
                 <option value="4">4반</option>
                 <option value="5">5반</option>
                 <option value="6">6반</option>
-                <option value="7">7반</option>
-                <option value="8">8반</option>
-                <option value="9">9반</option>
-                <option value="10">10반</option>
-                <option value="11">11반</option>
-                <option value="12">12반</option>
+
             </select>
             <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
 
@@ -532,7 +528,6 @@
             <button class="btn" style="background-color:#7f8c8d;" onclick="openPrintModal()">🖨️ 출력 센터</button>
         </div>
     </div>
-
 
 
     <div class="main-container">
@@ -721,9 +716,14 @@
                 return;
             }
 
+
+            // 기존 코드 라인 부근을 찾아 아래처럼 변경하세요.
+
             switchPanel('allClassesPanel');
             const tableContainer = document.getElementById('allClassesTableContainer');
-            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~12반)`;
+
+            // 📌 수정: 제목을 1~12반에서 1~6반으로 변경
+            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~6반)`;
             tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
 
             try {
@@ -733,8 +733,8 @@
                 const allData = await res.json();
                 const subData = allData.submissions || [];
 
-                // 변경 후 코드
-                const targetClasses = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+                // 📌 수정: 7~12반을 삭제하고 1~6반까지만 남김
+                const targetClasses = ['1', '2', '3', '4', '5', '6'];
                 const classData = {};
                 let maxStudentNum = 0;
 
