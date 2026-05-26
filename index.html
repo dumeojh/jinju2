@@ -100,14 +100,8 @@
             const targetUrl = selectBox.value;
 
             if (targetUrl) {
-                // 학생용 수행평가일 경우 새 창(새 탭)으로 열기
-                if (targetUrl === "2026-1-01.html") {
-                    window.open(targetUrl, '_blank');
-                }
-                // 교사용 메뉴는 새 창에서 이동
-                else {
-                    window.open(targetUrl, '_blank');
-                }
+                // 선택한 메뉴를 새 탭에서 열기
+                window.open(targetUrl, '_blank');
 
                 // 동작 후 콤보박스 초기화
                 setTimeout(() => { selectBox.value = ""; }, 100);
