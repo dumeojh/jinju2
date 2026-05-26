@@ -377,7 +377,8 @@
             });
         }
 
-        function showStudentDetail(index) {
+
+function showStudentDetail(index) {
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`student-item-${index}`).classList.add('active');
 
@@ -387,30 +388,36 @@
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('gradingPanel').style.display = 'block';
 
+            // 1. 기본 인적사항
             document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
-            document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역']) || '-';
-            document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목']) || '제목 없음';
-            document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1']) || '-';
-            document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2']) || '-';
-            document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3']) || '-';
-            document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유']) || '내용 없음';
-            document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터']) || '-';
+            
+            // 💡 2. 본문 데이터 (영문 변수명 대비 키워드 추가)
+            document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
+            document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
+            document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
+            document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
+            document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
 
             const formulaDiv = document.getElementById('dispFormula');
-            formulaDiv.innerHTML = getFuzzy(s, ['산출된 함수식', '함수식']) || '수식 없음';
+            formulaDiv.innerHTML = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
             MathJax.typesetPromise([formulaDiv]);
 
-            document.getElementById('dispObs1').innerText = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징']) || '내용 없음';
-            document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석']) || '내용 없음';
-            document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰']) || '내용 없음';
+            document.getElementById('dispObs1').innerText = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+            document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+            document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징']) || '';
-            document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석']) || '';
-            document.getElementById('score3').value = getFuzzy(s, ['채점_성찰(10점)', '채점_성찰']) || '';
-            document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '피드백']) || '';
+            // 3. 채점 영역
+            document.getElementById('score1').value = getFuzzy(s, ['채점_특징(20점)', '채점_특징', 'score1']) || '';
+            document.getElementById('score2').value = getFuzzy(s, ['채점_해석(20점)', '채점_해석', 'score2']) || '';
+            document.getElementById('score3').value = getFuzzy(s, ['채점_성찰(10점)', '채점_성찰', 'score3']) || '';
+            document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
 
             calculateTotal();
+            
 
+            // 4. 시스템 확인용 디버깅 영역
             let debugHtml = `<h4 style="margin-top:0; color:#3498db;">🛠 시스템 확인용 원본 데이터</h4>`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
