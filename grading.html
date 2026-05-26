@@ -541,12 +541,19 @@
             </div>
         </div>
 
+
+
         <div class="grading-panel" id="gradingPanel">
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
                 <h2 id="dispStudentInfo" style="margin:0; color:var(--primary);">학생 정보</h2>
-                <span id="dispFuncArea"
-                    style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">영역</span>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span id="dispFuncArea"
+                        style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">영역</span>
+                    <button class="btn" style="background-color: #8e44ad; padding: 5px 15px; font-size: 0.9em;"
+                        onclick="copyAIPrompt()">🤖 생기부 프롬프트 복사</button>
+                </div>
             </div>
+
 
             <details class="custom-accordion" open>
                 <summary>📝 학생 제출 답안 확인</summary>
@@ -1297,7 +1304,64 @@
                 closePrintModal();
             }
         }
+        // 🤖 AI 생기부 프롬프트 생성 및 복사 함수
+        function copyAIPrompt() {
+            if (!selectedStudent) {
+                alert("학생을 먼저 선택해주세요.");
+                return;
+            }
 
+            const s = selectedStudent;
+
+            // 학생 데이터 추출
+            const name = s['이름'] || '';
+            const funcArea = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '미지정';
+            const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            const rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+            const cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+
+            const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+            const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+            const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+            const total = document.getElementById('totalScore').value || '미채점';
+            const feedback = document.getElementById('teacherFeedback').value || '피드백 없음';
+
+            // AI에게 전달할 완벽한 프롬프트(명령어) 템플릿 구성
+            const promptText = `당신은 고등학교 2학년 '대수' 과목을 가르치는 전문적이고 통찰력 있는 수학 교사입니다. 
+다음은 우리 반 학생(${name})이 제출한 '함수 기사문 작성' 수행평가 결과물과 교사의 평가 내용입니다. 
+
+이 데이터를 바탕으로 학교생활기록부 '세부능력 및 특기사항(세특)'에 들어갈 문구를 작성해 주세요.
+
+[학생 작성 데이터]
+- 탐구 영역: ${funcArea}
+- 기사 제목: ${title}
+- 주제 선정 이유: ${reason}
+- 실생활 데이터로 산출한 함수식: ${cleanFormula}
+- 그래프의 수학적 특징 분석: ${obs1}
+- 실세계 현상 해석: ${obs2}
+- 수학적 유용성 및 가치 성찰: ${obs3}
+
+[교사 평가 결과]
+- 총점: ${total}점 / 20점 만점
+- 교사 관찰 피드백: ${feedback}
+
+[작성 조건 - 매우 중요]
+1. 글자 수는 공백 포함 500자 이상, 600자 이내로 엄격하게 맞춰주세요.
+2. 문체는 객관적이고 학술적인 학교생활기록부 평어체(~함, ~임, ~능력을 보임 등)를 사용하세요.
+3. 학생이 어떤 데이터를 바탕으로 어떤 함수식을 도출했는지, 그리고 이를 통해 무엇을 분석해냈는지 구체적인 '대수적 사고력'과 '문제해결역량'이 돋보이도록 작성하세요.
+4. 불필요한 미사여구를 빼고 학생의 학업 역량과 성장에 초점을 맞추세요.
+5. 출력 결과물에는 다른 부연 설명 없이 생기부에 들어갈 문장만 딱 출력해 주세요.`;
+
+            // 클립보드에 복사하기
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert(`✅ ${name} 학생의 AI 생기부 프롬프트가 복사되었습니다!\n\nChatGPT나 Gemini 입력창에 '붙여넣기(Ctrl+V)' 하세요.`);
+            }).catch(err => {
+                alert("❌ 복사에 실패했습니다. 브라우저 권한을 확인해주세요.");
+                console.error('클립보드 복사 에러:', err);
+            });
+        }
 
     </script>
     <div id="printArea" style="display: none;"></div>
