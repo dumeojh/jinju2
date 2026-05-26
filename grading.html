@@ -970,8 +970,8 @@
             const sortedData = [...currentSubmissions].sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
 
             let printHtml = `
-                <style>
-                    @page { size: landscape; margin: 15mm; }
+<style>
+                    @page { size: portrait; margin: 15mm; } 
                 </style>
                 <div class="print-title">수학 수행평가 채점 현황 (${grade}학년 ${cls}반)</div>
                 <table class="print-table">
