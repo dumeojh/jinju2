@@ -17,7 +17,6 @@
             --bg: #f8f9fa;
             --success: #27ae60;
             --purple: #8e44ad;
-            /* 전체반 확인 버튼 색상 */
         }
 
         body {
@@ -155,10 +154,8 @@
             padding: 25px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             display: none;
-            /* 기본 숨김 */
         }
 
-        /* 🌟 전체반 채점확인 패널 스타일 추가 */
         .all-classes-panel {
             flex: 3;
             background: white;
@@ -166,13 +163,11 @@
             padding: 25px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             display: none;
-            /* 기본 숨김 */
         }
 
         .status-table-wrapper {
             width: 100%;
             overflow-x: auto;
-            /* 가로 스크롤 허용 (태블릿/모바일 대비) */
             margin-top: 15px;
         }
 
@@ -180,7 +175,6 @@
             width: 100%;
             border-collapse: collapse;
             min-width: 1000px;
-            /* 테이블 최소 너비 보장 */
             text-align: center;
         }
 
@@ -209,7 +203,6 @@
 
         .status-table .class-divider {
             border-right: 2px solid #2c3e50;
-            /* 반 구분을 위한 굵은 선 */
         }
 
         .empty-state {
@@ -222,7 +215,6 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
-        /* 아코디언 및 기타 스타일 */
         .custom-accordion {
             background: white;
             border: 1px solid #ddd;
@@ -534,7 +526,6 @@
             return null;
         }
 
-        // 패널 전환 헬퍼 함수
         function switchPanel(panelId) {
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('gradingPanel').style.display = 'none';
@@ -551,7 +542,9 @@
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
-                const res = await fetch(FETCH_URL);
+                // 🌟 브라우저 캐시 방지 코드 추가
+                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                const res = await fetch(urlWithTime, { cache: 'no-store' });
                 const allData = await res.json();
 
                 if (Array.isArray(allData)) {
@@ -566,14 +559,12 @@
                 currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
 
                 renderStudentList();
-                // 학급을 불러올 때 기본 빈 화면으로 리셋
                 switchPanel('emptyState');
             } catch (error) {
                 listPanel.innerHTML = `<div style="text-align:center; padding:20px; color:red;">데이터 로드 실패: ${error.message}</div>`;
             }
         }
 
-        // 🌟 새로 추가된 '전체반 채점확인' 데이터를 불러오고 표를 그리는 함수
         async function loadAllClassesStatus() {
             const grade = document.getElementById('filterGrade').value;
             if (!grade) {
@@ -587,7 +578,9 @@
             tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
 
             try {
-                const res = await fetch(FETCH_URL);
+                // 🌟 브라우저 캐시 방지 코드 추가
+                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                const res = await fetch(urlWithTime, { cache: 'no-store' });
                 const allData = await res.json();
                 const subData = allData.submissions || [];
 
@@ -595,22 +588,26 @@
                 const classData = {};
                 let maxStudentNum = 0;
 
-                // 각 반별로 데이터 분류 및 가장 큰 번호(연번 기준) 찾기
                 targetClasses.forEach(c => {
                     classData[c] = subData.filter(row => String(row['학년']) === grade && String(row['반']) === c);
+
                     classData[c].forEach(student => {
+                        // 🌟 핵심 해결: 방금 전 화면에서 채점하여 메모리에 남아있는 점수가 있다면 가장 우선적으로 적용 (서버 반영 지연 완벽 해결)
+                        const localUpdated = currentSubmissions.find(s => String(s['반']) === String(student['반']) && String(s['번호']) === String(student['번호']));
+                        if (localUpdated && localUpdated['총점']) {
+                            student['총점'] = localUpdated['총점'];
+                        }
+
                         const num = parseInt(student['번호']) || 0;
                         if (num > maxStudentNum) maxStudentNum = num;
                     });
                 });
 
-                // 가장 큰 번호가 0이면 데이터가 없는 것
                 if (maxStudentNum === 0) {
                     tableContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#7f8c8d;">해당 학년의 데이터가 없습니다.</div>';
                     return;
                 }
 
-                // 테이블 헤더(목차) HTML 작성
                 let html = `<table class="status-table">`;
                 html += `<thead><tr><th rowspan="2" class="class-divider">연번</th>`;
 
@@ -624,27 +621,24 @@
                 });
                 html += `</tr></thead><tbody>`;
 
-                // 데이터 행 작성 (번호순으로 모든 반 동일 라인 맞춤)
                 for (let i = 1; i <= maxStudentNum; i++) {
                     html += `<tr><td class="class-divider"><strong>${i}</strong></td>`;
 
                     targetClasses.forEach(c => {
-                        // 해당 반에 현재 반복 번호(i)를 가진 학생이 있는지 검색
                         const student = classData[c].find(s => parseInt(s['번호']) === i);
 
                         if (student) {
-                            // '학번' 열이 데이터에 있으면 쓰고, 없으면 만들어주거나 번호만 사용
                             let hakbun = getFuzzy(student, ['학번']);
                             if (!hakbun) {
-                                // 학번 데이터가 명시적으로 없으면 '20105' 형태로 조립 (학년 + 반 두자리 + 번호 두자리)
                                 hakbun = `${grade}${c.padStart(2, '0')}${String(i).padStart(2, '0')}`;
                             }
                             const name = student['이름'] || '';
-                            const score = student['총점'] || '';
-                            // 채점이 완료되었으면 점수 표시, 아니면 빈칸
+
+                            // 혹시 구글 시트의 열 이름이 '총점(20점)' 같이 되어있어도 찰떡같이 찾도록 적용
+                            const score = student['총점'] || getFuzzy(student, ['총점', '총점(20점)', 'totalScore']) || '';
+
                             html += `<td>${hakbun}</td><td>${name}</td><td class="class-divider"><strong>${score}</strong></td>`;
                         } else {
-                            // 학생이 없는 경우 빈칸 출력 (줄을 맞추기 위함)
                             html += `<td></td><td></td><td class="class-divider"></td>`;
                         }
                     });
@@ -768,13 +762,11 @@
                 await fetch(BASE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                 alert("✅ 채점 결과가 저장되었습니다.");
 
-                // 👇 화면(메모리)에도 저장된 세부 점수를 바로 업데이트해주는 코드 추가 👇
                 selectedStudent['score1'] = payload.score1;
                 selectedStudent['score2'] = payload.score2;
                 selectedStudent['score3'] = payload.score3;
                 selectedStudent['feedback'] = payload.feedback;
                 selectedStudent['총점'] = payload.totalScore;
-                // 👆 -------------------------------------------------------- 👆
 
                 renderStudentList();
             } catch (error) {
