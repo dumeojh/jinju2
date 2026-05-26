@@ -1,1 +1,120 @@
-1
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>안성여고 수학 수행평가 통합 메뉴</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 450px;
+            border-top: 5px solid var(--accent);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-top: 0;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            background: #fff;
+            color: var(--primary);
+            font-weight: bold;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%233498db%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 15px auto;
+        }
+
+        select:hover,
+        select:focus {
+            border-color: #2980b9;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .footer {
+            margin-top: 35px;
+            font-size: 0.85em;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>📐 통합 메뉴 시스템</h1>
+        <p>이동할 페이지를 콤보 박스에서 선택해 주세요.</p>
+
+        <select id="menuSelect" onchange="navigateToPage()">
+            <option value="">-- 메뉴를 선택하세요 --</option>
+            <option value="2026-1-01.html">📝 수행평가 (학생용)</option>
+            <option value="dashboard.html">📊 실시간 현황 (교사용)</option>
+            <option value="grading.html">✅ 채점 (교사용)</option>
+        </select>
+
+        <div class="footer">안성여고 수학 수행평가 시스템</div>
+    </div>
+
+    <script>
+        function navigateToPage() {
+            const selectBox = document.getElementById('menuSelect');
+            const targetUrl = selectBox.value;
+
+            if (targetUrl) {
+                // 학생용 수행평가일 경우 새 창(새 탭)으로 열기
+                if (targetUrl === "2026-1-01.html") {
+                    window.open(targetUrl, '_blank');
+                }
+                // 교사용 메뉴는 새 창에서 이동
+                else {
+                    window.open(targetUrl, '_blank');
+                }
+
+                // 동작 후 콤보박스 초기화
+                setTimeout(() => { selectBox.value = ""; }, 100);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
