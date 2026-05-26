@@ -401,6 +401,63 @@
                 color: #000;
             }
         }
+
+        /* 인쇄 모달 배경 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 인쇄 모달 창 */
+        .print-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .print-modal h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .print-option-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 15px;
+            background: #f1f4f8;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05em;
+            transition: 0.2s;
+        }
+
+        .print-option-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .close-modal-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -430,11 +487,14 @@
                 <option value="12">12반</option>
             </select>
             <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
+
             <button class="btn btn-purple" onclick="loadAllClassesStatus()">전체반 채점확인</button>
 
-            <button class="btn" style="background-color:#7f8c8d;" onclick="printClassStatus()">🖨️ 반별 인쇄</button>
+            <button class="btn" style="background-color:#7f8c8d;" onclick="openPrintModal()">🖨️ 출력 센터</button>
         </div>
     </div>
+
+
 
     <div class="main-container">
         <div class="student-list-panel" id="studentListPanel">
@@ -894,8 +954,43 @@
 
             printArea.style.display = 'none'; // 인쇄 완료/취소 후 다시 숨김
         }
-    </script>
-    <div id="printArea" style="display: none;"></div>
-</body>
+        function openPrintModal() {
+            document.getElementById('printModalOverlay').style.display = 'flex';
+        }
 
-</html>
+        function closePrintModal() {
+            document.getElementById('printModalOverlay').style.display = 'none';
+        }
+
+        // 개별 학생 인쇄용 빈 함수 (나중에 로직을 채워넣으시면 됩니다)
+        function printIndividualStudent() {
+            if (!selectedStudent) {
+                alert("먼저 왼쪽 명단에서 인쇄할 학생을 선택해주세요.");
+                return;
+            }
+            // 여기에 개별 인쇄 로직 작성
+            closePrintModal();
+        }
+    </script>
+    <details class="custom-accordion">
+        <summary>📊 [실시간현황] 시트 원본</summary>
+        <div class="accordion-content" id="debugStatusArea"></div>
+    </details>
+    </div>
+    </div>
+
+    <div class="modal-overlay" id="printModalOverlay">
+        <div class="print-modal">
+            <h3>🖨️ 무엇을 인쇄할까요?</h3>
+            <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
+            <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 학생 개별 답안 인쇄</button>
+            <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
+        </div>
+    </div>
+    <script src="config.js"></script>
+    <script>
+        const FETCH_URL = BASE_SCRIPT_URL;
+        <div id="printArea" style="display: none;"></div>
+</body >
+
+</html >
