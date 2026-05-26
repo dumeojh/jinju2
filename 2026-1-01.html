@@ -691,6 +691,7 @@
             const refs = document.querySelectorAll('.ref');
 
             const payload = {
+                action: 'submit',  // 👈 이 줄을 반드시 추가해 주세요! (구글 서버에게 최종 제출임을 알림)
                 grade: grade,
                 stuClass: clsNum,
                 stuNum: num,
