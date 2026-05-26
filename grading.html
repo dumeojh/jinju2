@@ -1174,6 +1174,119 @@
         }
 
 
+
+        // 🖨️ [추가] 선택한 학생들 연속 인쇄 함수
+        function printSelectedStudents() {
+            // 1. 체크된 체크박스들을 모두 찾습니다.
+            const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+
+            if (checkedBoxes.length === 0) {
+                alert("인쇄할 학생을 체크박스에서 한 명 이상 선택해주세요.");
+                return;
+            }
+
+            let combinedHtml = "";
+
+            // 2. 체크된 학생들마다 인쇄용 HTML을 생성해서 합칩니다.
+            checkedBoxes.forEach((box, index) => {
+                const studentIndex = box.value;
+                const s = currentSubmissions[studentIndex];
+
+                // 데이터 추출
+                const grade = s['학년'] || '';
+                const cls = s['반'] || '';
+                const num = s['번호'] || '';
+                const name = s['이름'] || '';
+
+                const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+                const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+                const dataPoints = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
+                let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+                let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+
+                const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+                const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+                const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+                const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
+                const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
+
+                // 💡 중요: page-break-after: always; 를 주어 학생마다 새 페이지에 인쇄되도록 합니다.
+                // 단, 마지막 학생은 페이지를 넘길 필요가 없으므로 제외합니다.
+                const pageBreakStyle = (index < checkedBoxes.length - 1) ? 'page-break-after: always;' : '';
+
+                let singleHtml = `
+                <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px; ${pageBreakStyle}">
+                    <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
+                        학생 개별 답안 및 채점 결과
+                    </div>
+                    <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
+                        <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+                    </div>
+                    
+                    <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
+                        <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
+                        <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
+                        <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
+                        <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
+                        <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
+                        <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
+                        <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
+                    </table>
+
+                    <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                        ✅ 평가 결과
+                    </div>
+                    <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
+                        <tr>
+                            <th style="text-align: center;">조사/재구성 (5점)</th>
+                            <th style="text-align: center;">현상 분석 (10점)</th>
+                            <th style="text-align: center;">가치 제시 (5점)</th>
+                            <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
+                        </tr>
+                        <tr>
+                            <td>${sc1}</td>
+                            <td>${sc2}</td>
+                            <td>${sc3}</td>
+                            <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 20px;">
+                        <strong>📝 교사 피드백:</strong>
+                        <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
+                            ${feedback.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                </div>
+                `;
+
+                combinedHtml += singleHtml;
+            });
+
+            // 3. 만들어진 긴 HTML을 인쇄 영역에 넣고 처리합니다.
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = combinedHtml;
+            printArea.style.display = 'block';
+
+            // 수식이 포함되어 있으므로 MathJax 렌더링이 끝난 후 인쇄 실행
+            if (window.MathJax) {
+                MathJax.typesetPromise([printArea]).then(() => {
+                    window.print();
+                    printArea.style.display = 'none';
+                    closePrintModal();
+                });
+            } else {
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
+            }
+        }
+
+
     </script>
     <div id="printArea" style="display: none;"></div>
 
