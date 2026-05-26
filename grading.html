@@ -16,6 +16,8 @@
             --accent: #3498db;
             --bg: #f8f9fa;
             --success: #27ae60;
+            --purple: #8e44ad;
+            /* 전체반 확인 버튼 색상 */
         }
 
         body {
@@ -73,6 +75,14 @@
 
         .btn:hover {
             background: #2980b9;
+        }
+
+        .btn-purple {
+            background: var(--purple);
+        }
+
+        .btn-purple:hover {
+            background: #732d91;
         }
 
         .btn-save {
@@ -145,8 +155,74 @@
             padding: 25px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             display: none;
+            /* 기본 숨김 */
         }
 
+        /* 🌟 전체반 채점확인 패널 스타일 추가 */
+        .all-classes-panel {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+            /* 기본 숨김 */
+        }
+
+        .status-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            /* 가로 스크롤 허용 (태블릿/모바일 대비) */
+            margin-top: 15px;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+            /* 테이블 최소 너비 보장 */
+            text-align: center;
+        }
+
+        .status-table th,
+        .status-table td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            font-size: 0.9em;
+        }
+
+        .status-table th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        .status-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .status-table tr:hover {
+            background-color: #f1f4f8;
+        }
+
+        .status-table .class-divider {
+            border-right: 2px solid #2c3e50;
+            /* 반 구분을 위한 굵은 선 */
+        }
+
+        .empty-state {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 아코디언 및 기타 스타일 */
         .custom-accordion {
             background: white;
             border: 1px solid #ddd;
@@ -224,7 +300,6 @@
             border: 2px solid #f1c40f;
         }
 
-        /* 💡 2열 레이아웃을 위한 CSS 추가 */
         .grading-split {
             display: flex;
             flex-wrap: wrap;
@@ -263,7 +338,6 @@
             font-weight: bold;
             color: var(--primary);
             flex: 1;
-            /* 라벨이 공간을 알맞게 차지하도록 수정 */
             padding-right: 15px;
             line-height: 1.3;
         }
@@ -274,16 +348,6 @@
             font-weight: bold;
         }
 
-        .empty-state {
-            flex: 3;
-            background: white;
-            border-radius: 12px;
-            padding: 50px;
-            text-align: center;
-            color: #7f8c8d;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-
         @media (max-width: 850px) {
             .main-container {
                 flex-direction: column;
@@ -291,6 +355,7 @@
 
             .student-list-panel,
             .grading-panel,
+            .all-classes-panel,
             .empty-state {
                 width: 100%;
                 box-sizing: border-box;
@@ -325,6 +390,7 @@
                 <option value="12">12반</option>
             </select>
             <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
+            <button class="btn btn-purple" onclick="loadAllClassesStatus()">전체반 채점확인</button>
         </div>
     </div>
 
@@ -332,7 +398,14 @@
         <div class="student-list-panel" id="studentListPanel">
             <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
         </div>
+
         <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.</div>
+
+        <div class="all-classes-panel" id="allClassesPanel">
+            <h2 id="allClassesTitle" style="margin-top:0; color:var(--primary);">전체반 채점 확인</h2>
+            <div class="status-table-wrapper" id="allClassesTableContainer">
+            </div>
+        </div>
 
         <div class="grading-panel" id="gradingPanel">
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
@@ -344,7 +417,6 @@
             <details class="custom-accordion" open>
                 <summary>📝 학생 제출 답안 확인</summary>
                 <div class="accordion-content">
-
                     <div class="section-title">기사 제목 및 참고자료</div>
                     <div class="answer-box">
                         <div style="margin-bottom: 12px; font-size: 1.1em;"><strong id="dispTitle">제목 들어갈 자리</strong>
@@ -382,7 +454,6 @@
                             <div id="dispObs3" style="margin-top: 5px; color: #444;"></div>
                         </div>
                     </div>
-
                 </div>
             </details>
 
@@ -415,15 +486,13 @@
                                     <input type="number" id="totalScore" readonly
                                         style="background:#fff; border: 2px solid #d35400; font-size: 1.3em; color: #d35400; width: 90px;">
                                 </div>
-
                                 <div style="flex-grow: 1; display: flex; flex-direction: column;">
-                                    <label style="font-weight:bold; color:var(--primary); margin-bottom:8px;">채점 특이사항
-                                    </label>
+                                    <label style="font-weight:bold; color:var(--primary); margin-bottom:8px;">채점
+                                        특이사항</label>
                                     <textarea id="teacherFeedback"
                                         style="flex-grow: 1; min-height: 80px; margin-bottom: 15px; width: 100%; box-sizing: border-box; resize: none; font-size: 0.95em;"
                                         placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
                                 </div>
-
                                 <button class="btn btn-save" style="margin-top: 0; padding: 15px;"
                                     onclick="saveGrade()">채점 결과 저장</button>
                             </div>
@@ -441,7 +510,6 @@
                 <summary>📊 [실시간현황] 시트 원본</summary>
                 <div class="accordion-content" id="debugStatusArea"></div>
             </details>
-
         </div>
     </div>
 
@@ -466,6 +534,14 @@
             return null;
         }
 
+        // 패널 전환 헬퍼 함수
+        function switchPanel(panelId) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('gradingPanel').style.display = 'none';
+            document.getElementById('allClassesPanel').style.display = 'none';
+            document.getElementById(panelId).style.display = 'block';
+        }
+
         async function loadSubmissions() {
             const grade = document.getElementById('filterGrade').value;
             const cls = document.getElementById('filterClass').value;
@@ -480,7 +556,6 @@
 
                 if (Array.isArray(allData)) {
                     alert("🚨 [오류] 구글 서버가 아직 옛날 코드로 응답하고 있습니다!\n\n구글 앱스 스크립트 화면에서 우측 상단 [배포] -> [배포 관리] -> [수정(연필)] -> [새 버전]으로 배포를 꼭 완료해 주세요!");
-                    listPanel.innerHTML = '<div style="color:red; padding:20px; text-align:center;">구글 서버 코드를 새 버전으로 배포해야 작동합니다.</div>';
                     return;
                 }
 
@@ -491,8 +566,96 @@
                 currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
 
                 renderStudentList();
+                // 학급을 불러올 때 기본 빈 화면으로 리셋
+                switchPanel('emptyState');
             } catch (error) {
                 listPanel.innerHTML = `<div style="text-align:center; padding:20px; color:red;">데이터 로드 실패: ${error.message}</div>`;
+            }
+        }
+
+        // 🌟 새로 추가된 '전체반 채점확인' 데이터를 불러오고 표를 그리는 함수
+        async function loadAllClassesStatus() {
+            const grade = document.getElementById('filterGrade').value;
+            if (!grade) {
+                alert("확인하실 '학년'을 먼저 선택해주세요.");
+                return;
+            }
+
+            switchPanel('allClassesPanel');
+            const tableContainer = document.getElementById('allClassesTableContainer');
+            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~6반)`;
+            tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
+
+            try {
+                const res = await fetch(FETCH_URL);
+                const allData = await res.json();
+                const subData = allData.submissions || [];
+
+                const targetClasses = ['1', '2', '3', '4', '5', '6'];
+                const classData = {};
+                let maxStudentNum = 0;
+
+                // 각 반별로 데이터 분류 및 가장 큰 번호(연번 기준) 찾기
+                targetClasses.forEach(c => {
+                    classData[c] = subData.filter(row => String(row['학년']) === grade && String(row['반']) === c);
+                    classData[c].forEach(student => {
+                        const num = parseInt(student['번호']) || 0;
+                        if (num > maxStudentNum) maxStudentNum = num;
+                    });
+                });
+
+                // 가장 큰 번호가 0이면 데이터가 없는 것
+                if (maxStudentNum === 0) {
+                    tableContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#7f8c8d;">해당 학년의 데이터가 없습니다.</div>';
+                    return;
+                }
+
+                // 테이블 헤더(목차) HTML 작성
+                let html = `<table class="status-table">`;
+                html += `<thead><tr><th rowspan="2" class="class-divider">연번</th>`;
+
+                targetClasses.forEach(c => {
+                    html += `<th colspan="3" class="class-divider">${c}반</th>`;
+                });
+
+                html += `</tr><tr>`;
+                targetClasses.forEach(c => {
+                    html += `<th>학번</th><th>이름</th><th class="class-divider">총점</th>`;
+                });
+                html += `</tr></thead><tbody>`;
+
+                // 데이터 행 작성 (번호순으로 모든 반 동일 라인 맞춤)
+                for (let i = 1; i <= maxStudentNum; i++) {
+                    html += `<tr><td class="class-divider"><strong>${i}</strong></td>`;
+
+                    targetClasses.forEach(c => {
+                        // 해당 반에 현재 반복 번호(i)를 가진 학생이 있는지 검색
+                        const student = classData[c].find(s => parseInt(s['번호']) === i);
+
+                        if (student) {
+                            // '학번' 열이 데이터에 있으면 쓰고, 없으면 만들어주거나 번호만 사용
+                            let hakbun = getFuzzy(student, ['학번']);
+                            if (!hakbun) {
+                                // 학번 데이터가 명시적으로 없으면 '20105' 형태로 조립 (학년 + 반 두자리 + 번호 두자리)
+                                hakbun = `${grade}${c.padStart(2, '0')}${String(i).padStart(2, '0')}`;
+                            }
+                            const name = student['이름'] || '';
+                            const score = student['총점'] || '';
+                            // 채점이 완료되었으면 점수 표시, 아니면 빈칸
+                            html += `<td>${hakbun}</td><td>${name}</td><td class="class-divider"><strong>${score}</strong></td>`;
+                        } else {
+                            // 학생이 없는 경우 빈칸 출력 (줄을 맞추기 위함)
+                            html += `<td></td><td></td><td class="class-divider"></td>`;
+                        }
+                    });
+                    html += `</tr>`;
+                }
+                html += `</tbody></table>`;
+
+                tableContainer.innerHTML = html;
+
+            } catch (error) {
+                tableContainer.innerHTML = `<div style="text-align:center; padding:50px; color:red;">데이터 로드 실패: ${error.message}</div>`;
             }
         }
 
@@ -523,8 +686,7 @@
             selectedStudent = currentSubmissions[index];
             const s = selectedStudent;
 
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('gradingPanel').style.display = 'block';
+            switchPanel('gradingPanel');
 
             document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
             document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
@@ -541,7 +703,6 @@
             document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            // 수식 가로 정렬
             const formulaDiv = document.getElementById('dispFormula');
             let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
             let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
@@ -555,7 +716,6 @@
 
             calculateTotal();
 
-            // 디버그 데이터: 제출데이터 원본
             let debugSubHtml = `<div style="background:#eef2f7; padding:15px; border-radius:8px; border-left: 4px solid #3498db; color: #333; font-size: 0.95em; word-break: break-all;">`;
             for (let key in s) {
                 let val = s[key] || "비어있음";
@@ -564,7 +724,6 @@
             debugSubHtml += `</div>`;
             document.getElementById('debugSubmissionArea').innerHTML = debugSubHtml;
 
-            // 디버그 데이터: 실시간현황 원본
             const stuNum = s['번호'];
             const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
             let debugStatHtml = `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333; font-size: 0.95em; word-break: break-all;">`;
