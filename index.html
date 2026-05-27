@@ -46,6 +46,41 @@
             font-size: 0.95em;
         }
 
+        /* 🔒 비밀번호 입력창 및 버튼 스타일 추가 */
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1.1em;
+            text-align: center;
+            outline: none;
+        }
+
+        input[type="password"]:focus {
+            border-color: #2980b9;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        }
+
+        button {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
         select {
             width: 100%;
             padding: 15px;
@@ -75,12 +110,25 @@
             font-size: 0.85em;
             color: #bdc3c7;
         }
+
+        /* 메인 컨테이너 초기 숨김 처리 */
+        #mainContainer {
+            display: none;
+        }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="container" id="authContainer">
+        <h1>🔒 시스템 접근</h1>
+        <p>메뉴에 접근하려면 비밀번호를 입력하세요.</p>
+        <input type="password" id="adminPwd" placeholder="비밀번호 입력" onkeypress="handleEnter(event)">
+        <button onclick="checkPassword()">확인</button>
+        <div class="footer">안성여고 수학 수행평가 시스템</div>
+    </div>
+
+    <div class="container" id="mainContainer">
         <h1>📐 통합 메뉴 시스템</h1>
         <p>이동할 페이지를 콤보 박스에서 선택해 주세요.</p>
 
@@ -95,15 +143,33 @@
     </div>
 
     <script>
+        // 비밀번호 체크 로직
+        function checkPassword() {
+            const pwd = document.getElementById('adminPwd').value;
+            if (pwd === "12345") {
+                // 비밀번호가 맞으면 인증 화면을 숨기고 메인 화면을 보여줌
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            } else {
+                alert("🚨 비밀번호가 일치하지 않습니다.");
+                document.getElementById('adminPwd').value = '';
+                document.getElementById('adminPwd').focus();
+            }
+        }
+
+        // 엔터키 지원 로직
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        }
+
         function navigateToPage() {
             const selectBox = document.getElementById('menuSelect');
             const targetUrl = selectBox.value;
 
             if (targetUrl) {
-                // 선택한 메뉴를 새 탭에서 열기
                 window.open(targetUrl, '_blank');
-
-                // 동작 후 콤보박스 초기화
                 setTimeout(() => { selectBox.value = ""; }, 100);
             }
         }
