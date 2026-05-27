@@ -1189,7 +1189,6 @@
         }
 
 
-
         // 🖨️ [추가] 선택한 학생들 연속 인쇄 함수
         function printSelectedStudents() {
             // 1. 체크된 체크박스들을 모두 찾습니다.
@@ -1201,10 +1200,11 @@
             }
 
             let combinedHtml = `
-                <style>
-                    @page { size: portrait; margin: 15mm; } 
-                </style>
-            `;
+        <style>
+            /* 용지 여백을 15mm에서 10mm로 줄여 공간 확보 */
+            @page { size: portrait; margin: 10mm; } 
+        </style>
+    `;
 
             // 2. 체크된 학생들마다 인쇄용 HTML을 생성해서 합칩니다.
             checkedBoxes.forEach((box, index) => {
@@ -1234,54 +1234,54 @@
                 const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
 
                 // 💡 중요: page-break-after: always; 를 주어 학생마다 새 페이지에 인쇄되도록 합니다.
-                // 단, 마지막 학생은 페이지를 넘길 필요가 없으므로 제외합니다.
                 const pageBreakStyle = (index < checkedBoxes.length - 1) ? 'page-break-after: always;' : '';
 
+                // 📝 전체적인 글자 크기를 10pt로 줄이고, 각 요소의 여백(margin/padding)을 축소함
                 let singleHtml = `
-                <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px; ${pageBreakStyle}">
-                    <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
-                        학생 개별 답안 및 채점 결과
-                    </div>
-                    <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
-                        <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
-                    </div>
-                    
-                    <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
-                        <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
-                        <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
-                        <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
-                        <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
-                        <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
-                        <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
-                        <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
-                    </table>
+        <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 5px; font-size: 10pt; ${pageBreakStyle}">
+            <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 10px;">
+                학생 개별 답안 및 채점 결과
+            </div>
+            <div style="margin-bottom: 10px; font-size: 1.05em; text-align: right;">
+                <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+            </div>
+            
+            <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 10px;">
+                <tr><th style="width: 20%; text-align: center; padding: 5px;">기사 제목</th><td style="padding-left: 8px; padding: 5px;"><strong>${title}</strong></td></tr>
+                <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1.1em; padding: 5px;">\\[${cleanFormula}\\]</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(1) 수학적 특징</th><td style="padding-left: 8px; padding: 5px;">${obs1}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(2) 현상 해석</th><td style="padding-left: 8px; padding: 5px;">${obs2}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(3) 가치 성찰</th><td style="padding-left: 8px; padding: 5px;">${obs3}</td></tr>
+            </table>
 
-                    <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
-                        ✅ 평가 결과
-                    </div>
-                    <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
-                        <tr>
-                            <th style="text-align: center;">조사/재구성 (5점)</th>
-                            <th style="text-align: center;">현상 분석 (10점)</th>
-                            <th style="text-align: center;">가치 제시 (5점)</th>
-                            <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
-                        </tr>
-                        <tr>
-                            <td>${sc1}</td>
-                            <td>${sc2}</td>
-                            <td>${sc3}</td>
-                            <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
-                        </tr>
-                    </table>
+            <div style="margin-top: 15px; font-size: 1.1em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                ✅ 평가 결과
+            </div>
+            <table class="print-table" style="width: 100%; margin-top: 5px; text-align: center;">
+                <tr>
+                    <th style="text-align: center; padding: 5px;">조사/재구성 (5점)</th>
+                    <th style="text-align: center; padding: 5px;">현상 분석 (10점)</th>
+                    <th style="text-align: center; padding: 5px;">가치 제시 (5점)</th>
+                    <th style="text-align: center; background-color: #f1c40f !important; padding: 5px;">총점 (20점)</th>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;">${sc1}</td>
+                    <td style="padding: 5px;">${sc2}</td>
+                    <td style="padding: 5px;">${sc3}</td>
+                    <td style="padding: 5px;"><strong style="font-size: 1.1em; color: #d35400;">${total}</strong></td>
+                </tr>
+            </table>
 
-                    <div style="margin-top: 20px;">
-                        <strong>📝 교사 피드백:</strong>
-                        <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
-                            ${feedback.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
+            <div style="margin-top: 10px;">
+                <strong>📝 교사 피드백:</strong>
+                <div style="padding: 8px; border: 1px solid #000; border-radius: 5px; margin-top: 5px; line-height: 1.4;">
+                    ${feedback.replace(/\n/g, '<br>')}
                 </div>
-                `;
+            </div>
+        </div>
+        `;
 
                 combinedHtml += singleHtml;
             });
@@ -1304,7 +1304,6 @@
                 closePrintModal();
             }
         }
-
 
 
 
