@@ -416,8 +416,15 @@
             cursor: pointer;
         }
 
+
         /* 🖨️ 인쇄 전용 스타일 */
         @media print {
+
+            /* 인쇄 여백 최소화 (모든 페이지 공통 적용) */
+            @page {
+                margin: 8mm;
+                /* 여백을 8mm로 최소화 */
+            }
 
             /* 인쇄 영역(#printArea)을 제외한 본문의 모든 요소를 공간까지 완전히 숨김 */
             body>*:not(#printArea) {
@@ -434,19 +441,24 @@
                 padding: 0;
             }
 
-
+            /* --- 개별/반별 공통 테이블 스타일 --- */
             .print-table {
                 width: 100%;
                 border-collapse: collapse;
                 text-align: center;
-                font-size: 11pt;
-                margin-top: 15px;
+                font-size: 8.5pt;
+                /* 📉 글자 크기 대폭 축소 (11pt -> 8.5pt) */
+                margin-top: 10px;
+                /* 위쪽 여백 축소 */
             }
 
             .print-table th,
             .print-table td {
                 border: 1px solid #000;
-                padding: 10px 5px;
+                padding: 4px 2px;
+                /* 📉 칸 내부 여백 대폭 축소 (위아래 4px, 좌우 2px) */
+                line-height: 1.1;
+                /* 줄 간격 축소 */
             }
 
             .print-table th {
@@ -458,28 +470,30 @@
 
             .print-title {
                 text-align: center;
-                font-size: 18pt;
+                font-size: 14pt;
+                /* 📉 제목 크기 축소 (18pt -> 14pt) */
                 font-weight: bold;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
+                /* 제목 아래 여백 축소 */
                 color: #000;
             }
 
-
-
-
+            /* --- 🏫 전체 반 채점 확인용 테이블 스타일 --- */
             .status-table {
                 width: 100%;
                 border-collapse: collapse;
                 text-align: center;
-                font-size: 9pt;
-                /* 가로로 길어서 글자 크기를 약간 줄임 */
-                margin-top: 15px;
+                font-size: 7.5pt;
+                /* 📉 전체반 테이블 글자 크기 대폭 축소 (9pt -> 7.5pt) */
+                margin-top: 10px;
             }
 
             .status-table th,
             .status-table td {
                 border: 1px solid #000 !important;
-                padding: 6px 2px;
+                padding: 3px 1px;
+                /* 📉 칸 내부 여백 극단적 축소 */
+                line-height: 1.0;
             }
 
             .status-table th {
@@ -492,8 +506,6 @@
             .status-table .class-divider {
                 border-right: 2px solid #000 !important;
             }
-
-
         }
     </style>
 </head>
