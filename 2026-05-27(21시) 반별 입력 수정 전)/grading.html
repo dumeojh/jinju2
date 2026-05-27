@@ -54,7 +54,6 @@
 
         select,
         input[type="number"],
-        input[type="text"],
         textarea {
             padding: 10px;
             border: 1px solid #ccc;
@@ -148,15 +147,22 @@
             color: var(--success);
         }
 
-        .grading-panel, .all-classes-panel, .batch-grading-panel {
+        .grading-panel {
             flex: 3;
             background: white;
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             display: none;
-            width: 100%;
-            overflow-x: auto;
+        }
+
+        .all-classes-panel {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: none;
         }
 
         .status-table-wrapper {
@@ -342,7 +348,6 @@
             .student-list-panel,
             .grading-panel,
             .all-classes-panel,
-            .batch-grading-panel,
             .empty-state {
                 width: 100%;
                 box-sizing: border-box;
@@ -369,8 +374,11 @@
             padding: 30px;
             border-radius: 12px;
             width: 90%;
+            /* 화면의 90%만 차지하도록 변경 */
             max-width: 350px;
+            /* 최대 너비 제한 */
             box-sizing: border-box;
+            /* 패딩 포함 크기 계산 */
             text-align: center;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
@@ -408,70 +416,21 @@
             cursor: pointer;
         }
 
-        /* 📝 반별 일괄 채점 전용 스타일 */
-        .batch-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
-            min-width: 800px;
-        }
-        
-        .batch-table th, .batch-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        .batch-table th {
-            background-color: var(--primary);
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-
-        .batch-table input[type="number"] {
-            width: 50px;
-            text-align: center;
-            padding: 6px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-        }
-
-        .batch-table input[type="text"] {
-            width: 95%;
-            padding: 6px;
-            border: 1px solid #bdc3c7;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        .btn-row-save {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-row-save:hover {
-            background: #2980b9;
-        }
-
-        .btn-row-save.saved {
-            background: var(--success);
-        }
-
 
         /* 🖨️ 인쇄 전용 스타일 */
         @media print {
+
+            /* 인쇄 여백 최소화 (모든 페이지 공통 적용) */
             @page {
                 margin: 8mm;
+                /* 여백을 8mm로 최소화 */
             }
+
+            /* 인쇄 영역(#printArea)을 제외한 본문의 모든 요소를 공간까지 완전히 숨김 */
             body>*:not(#printArea) {
                 display: none !important;
             }
+
             #printArea {
                 display: block !important;
                 position: relative;
@@ -481,51 +440,69 @@
                 margin: 0;
                 padding: 0;
             }
+
+            /* --- 개별/반별 공통 테이블 스타일 --- */
             .print-table {
                 width: 100%;
                 border-collapse: collapse;
                 text-align: center;
                 font-size: 8.5pt;
+                /* 📉 글자 크기 대폭 축소 (11pt -> 8.5pt) */
                 margin-top: 10px;
+                /* 위쪽 여백 축소 */
             }
+
             .print-table th,
             .print-table td {
                 border: 1px solid #000;
                 padding: 4px 2px;
+                /* 📉 칸 내부 여백 대폭 축소 (위아래 4px, 좌우 2px) */
                 line-height: 1.1;
+                /* 줄 간격 축소 */
             }
+
             .print-table th {
                 background-color: #f2f2f2 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
                 font-weight: bold;
             }
+
             .print-title {
                 text-align: center;
                 font-size: 14pt;
+                /* 📉 제목 크기 축소 (18pt -> 14pt) */
                 font-weight: bold;
                 margin-bottom: 10px;
+                /* 제목 아래 여백 축소 */
                 color: #000;
             }
+
+            /* --- 🏫 전체 반 채점 확인용 테이블 스타일 --- */
             .status-table {
                 width: 100%;
                 border-collapse: collapse;
                 text-align: center;
                 font-size: 7.5pt;
+                /* 📉 전체반 테이블 글자 크기 대폭 축소 (9pt -> 7.5pt) */
                 margin-top: 10px;
             }
+
             .status-table th,
             .status-table td {
                 border: 1px solid #000 !important;
                 padding: 3px 1px;
+                /* 📉 칸 내부 여백 극단적 축소 */
                 line-height: 1.0;
             }
+
             .status-table th {
                 background-color: #f2f2f2 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
                 font-weight: bold;
             }
+
             .status-table .class-divider {
                 border-right: 2px solid #000 !important;
             }
@@ -552,11 +529,9 @@
                 <option value="4">4반</option>
                 <option value="5">5반</option>
                 <option value="6">6반</option>
+
             </select>
             <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
-            
-            <!-- 🌟 새롭게 추가된 반별 일괄 채점 버튼 -->
-            <button class="btn btn-save" style="margin: 0; padding: 10px 15px; width: auto;" onclick="openBatchGrading()">📝 일괄 채점</button>
 
             <button class="btn btn-purple" onclick="loadAllClassesStatus()">전체반 채점확인</button>
 
@@ -570,7 +545,7 @@
             <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
         </div>
 
-        <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 학생을 선택하시거나<br>상단의 <strong>[일괄 채점]</strong> 버튼을 눌러주세요.</div>
+        <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 채점할 학생을 선택해 주세요.</div>
 
         <div class="all-classes-panel" id="allClassesPanel">
             <h2 id="allClassesTitle" style="margin-top:0; color:var(--primary);">전체반 채점 확인</h2>
@@ -578,15 +553,6 @@
             </div>
         </div>
 
-        <!-- 🌟 새롭게 추가된 반별 일괄 채점 패널 -->
-        <div class="batch-grading-panel" id="batchGradingPanel">
-            <h2 id="batchClassTitle" style="margin-top:0; margin-bottom: 20px; color:var(--primary);">반별 일괄 채점</h2>
-            <div style="margin-bottom: 15px; color: #d35400; font-size: 0.9em;">
-                💡 <strong>Tip:</strong> 키보드 <code>Tab</code> 키를 이용해 다음 칸으로 빠르게 이동할 수 있습니다. 각 줄 우측의 <strong>저장</strong> 버튼을 누르면 해당 학생의 점수가 반영됩니다.
-            </div>
-            <div class="status-table-wrapper" id="batchTableContainer">
-            </div>
-        </div>
 
 
         <div class="grading-panel" id="gradingPanel">
@@ -721,12 +687,10 @@
             return null;
         }
 
-        // 🌟 switchPanel 기능 업데이트 (새 패널 추가)
         function switchPanel(panelId) {
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('gradingPanel').style.display = 'none';
             document.getElementById('allClassesPanel').style.display = 'none';
-            document.getElementById('batchGradingPanel').style.display = 'none';
             document.getElementById(panelId).style.display = 'block';
         }
 
@@ -739,6 +703,7 @@
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
+                // 🌟 브라우저 캐시 방지 코드 추가
                 const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
                 const res = await fetch(urlWithTime, { cache: 'no-store' });
                 const allData = await res.json();
@@ -761,134 +726,6 @@
             }
         }
 
-
-        // 🌟 [추가 기능] 반별 일괄 채점 모드 진입
-        function openBatchGrading() {
-            if (currentSubmissions.length === 0) {
-                alert("먼저 학년과 반을 선택하고 [데이터 불러오기]를 진행해주세요.");
-                return;
-            }
-
-            const grade = document.getElementById('filterGrade').value;
-            const cls = document.getElementById('filterClass').value;
-            document.getElementById('batchClassTitle').innerText = `${grade}학년 ${cls}반 일괄 채점 (키보드 Tab으로 이동)`;
-
-            // 연번 순으로 정렬
-            const sortedData = [...currentSubmissions].sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
-
-            let html = `
-                <table class="batch-table">
-                    <thead>
-                        <tr>
-                            <th width="8%">연번</th>
-                            <th width="12%">이름</th>
-                            <th width="12%">조사/재구성<br>(5점)</th>
-                            <th width="12%">현상 분석<br>(10점)</th>
-                            <th width="12%">가치 제시<br>(5점)</th>
-                            <th width="12%">총점<br>(20점)</th>
-                            <th width="20%">피드백 특이사항</th>
-                            <th width="12%">저장</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            sortedData.forEach((s) => {
-                const index = currentSubmissions.indexOf(s); // 원본 배열에서의 인덱스
-                const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
-                const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
-                const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
-                const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
-                const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
-
-                html += `
-                    <tr>
-                        <td><strong>${s['번호']}</strong></td>
-                        <td>${s['이름']}</td>
-                        <td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})"></td>
-                        <td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})"></td>
-                        <td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})"></td>
-                        <td><input type="number" id="b_tot_${index}" value="${total}" readonly style="background:#f4f6f7; border-color:#d35400; color:#d35400; font-weight:bold;"></td>
-                        <td><input type="text" id="b_fb_${index}" value="${feedback}" placeholder="특이사항 작성"></td>
-                        <td><button class="btn-row-save" id="b_btn_${index}" onclick="saveBatchRow(${index})">저장</button></td>
-                    </tr>
-                `;
-            });
-
-            html += `</tbody></table>`;
-            document.getElementById('batchTableContainer').innerHTML = html;
-            
-            // 패널 전환
-            switchPanel('batchGradingPanel');
-            
-            // 사이드바 포커스 제거
-            document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
-        }
-
-        // 🌟 [추가 기능] 일괄 채점 모드 총점 계산
-        function calcBatchTotal(index) {
-            const s1 = parseInt(document.getElementById(`b_sc1_${index}`).value) || 0;
-            const s2 = parseInt(document.getElementById(`b_sc2_${index}`).value) || 0;
-            const s3 = parseInt(document.getElementById(`b_sc3_${index}`).value) || 0;
-            document.getElementById(`b_tot_${index}`).value = s1 + s2 + s3;
-        }
-
-        // 🌟 [추가 기능] 일괄 채점 모드 한 줄(학생 1명) 저장 통신
-        async function saveBatchRow(index) {
-            const student = currentSubmissions[index];
-            const btn = document.getElementById(`b_btn_${index}`);
-            
-            btn.innerText = "저장중..";
-            btn.disabled = true;
-
-            const payload = {
-                action: 'grade',
-                grade: student['학년'],
-                stuClass: student['반'],
-                stuNum: student['번호'],
-                score1: document.getElementById(`b_sc1_${index}`).value,
-                score2: document.getElementById(`b_sc2_${index}`).value,
-                score3: document.getElementById(`b_sc3_${index}`).value,
-                totalScore: document.getElementById(`b_tot_${index}`).value,
-                feedback: document.getElementById(`b_fb_${index}`).value
-            };
-
-            try {
-                await fetch(BASE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                // 성공 시 로컬 데이터 갱신
-                student['score1'] = payload.score1;
-                student['score2'] = payload.score2;
-                student['score3'] = payload.score3;
-                student['총점'] = payload.totalScore;
-                student['feedback'] = payload.feedback;
-
-                // 좌측 명단 뱃지 갱신
-                renderStudentList(); 
-
-                // 저장 완료 시각적 피드백
-                btn.innerText = "저장완료";
-                btn.classList.add('saved');
-            } catch (error) {
-                alert("❌ 저장 중 오류가 발생했습니다.");
-                btn.innerText = "저장 실패";
-            } finally {
-                btn.disabled = false;
-                // 1.5초 후 버튼 상태 원래대로 복구
-                setTimeout(() => {
-                    if (btn.classList.contains('saved')) {
-                        btn.innerText = "저장";
-                        btn.classList.remove('saved');
-                    }
-                }, 1500);
-            }
-        }
-
-
         async function loadAllClassesStatus() {
             const grade = document.getElementById('filterGrade').value;
             if (!grade) {
@@ -896,35 +733,50 @@
                 return;
             }
 
+
+            // 기존 코드 라인 부근을 찾아 아래처럼 변경하세요.
+
             switchPanel('allClassesPanel');
             const tableContainer = document.getElementById('allClassesTableContainer');
+
+            // 📌 수정: 제목을 1~12반에서 1~6반으로 변경
             document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~6반)`;
             tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
 
             try {
+                // 🌟 브라우저 캐시 방지 코드 추가
                 const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
                 const res = await fetch(urlWithTime, { cache: 'no-store' });
                 const allData = await res.json();
                 const subData = allData.submissions || [];
 
+                // 📌 수정: 7~12반을 삭제하고 1~6반까지만 남김
                 const targetClasses = ['1', '2', '3', '4', '5', '6'];
                 const classData = {};
                 let maxStudentNum = 0;
 
                 targetClasses.forEach(c => {
                     classData[c] = subData.filter(row => String(row['학년']) === grade && String(row['반']) === c);
+
                     classData[c].forEach(student => {
+                        // (중략...)
                         const num = parseInt(student['번호']) || 0;
                         if (num > maxStudentNum) maxStudentNum = num;
                     });
                 });
 
+                // 💡 이 코드를 추가합니다. (최대 40번까지만 표시되도록 제한)
                 if (maxStudentNum > 40) maxStudentNum = 40;
 
                 if (maxStudentNum === 0) {
                     tableContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#7f8c8d;">해당 학년의 데이터가 없습니다.</div>';
                     return;
                 }
+
+
+
+
+
 
                 let html = `<table class="status-table">`;
                 html += `<thead><tr><th rowspan="2" class="class-divider">연번</th>`;
@@ -951,6 +803,8 @@
                                 hakbun = `${grade}${c.padStart(2, '0')}${String(i).padStart(2, '0')}`;
                             }
                             const name = student['이름'] || '';
+
+                            // 혹시 구글 시트의 열 이름이 '총점(20점)' 같이 되어있어도 찰떡같이 찾도록 적용
                             const score = student['총점'] || getFuzzy(student, ['총점', '총점(20점)', 'totalScore']) || '';
 
                             html += `<td>${hakbun}</td><td>${name}</td><td class="class-divider"><strong>${score}</strong></td>`;
@@ -961,6 +815,7 @@
                     html += `</tr>`;
                 }
                 html += `</tbody></table>`;
+
                 tableContainer.innerHTML = html;
 
             } catch (error) {
@@ -968,15 +823,18 @@
             }
         }
 
+
         function renderStudentList() {
             const listPanel = document.getElementById('studentListPanel');
             listPanel.innerHTML = '';
 
+            // (중략 - 상단 추가 버튼 등 UI를 위해 조금 수정)
             if (currentSubmissions.length === 0) {
                 listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:#7f8c8d;">제출된 답안이 없습니다.</div>';
                 return;
             }
 
+            // 👇 전체 선택/해제 체크박스를 명단 맨 위에 하나 달아주면 편합니다 (옵션)
             listPanel.innerHTML = `
                 <div style="padding: 10px; border-bottom: 2px solid #ddd; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
                     <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes(this)" style="transform: scale(1.2); cursor: pointer;">
@@ -991,6 +849,7 @@
                 item.id = `student-item-${index}`;
                 const badge = student['총점'] ? `<span class="status-badge graded">채점완료</span>` : `<span class="status-badge">미채점</span>`;
 
+                // 👇 체크박스를 포함하도록 디자인 변경
                 item.innerHTML = `
                     <div style="display:flex; align-items:center; gap:10px;">
                         <input type="checkbox" class="student-checkbox" value="${index}" onclick="event.stopPropagation()" style="transform: scale(1.3); cursor: pointer;">
@@ -1003,6 +862,7 @@
             });
         }
 
+        // 👇 전체 선택/해제 동작을 위한 짧은 함수 (renderStudentList 함수 바로 아래에 추가)
         function toggleAllCheckboxes(source) {
             const checkboxes = document.querySelectorAll('.student-checkbox');
             checkboxes.forEach(cb => cb.checked = source.checked);
@@ -1096,7 +956,9 @@
             try {
                 await fetch(BASE_SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8' // 중요: application/json 대신 text/plain 사용
+                    },
                     body: JSON.stringify(payload)
                 });
 
@@ -1114,7 +976,7 @@
                 btn.disabled = false;
             }
         }
-
+        // 🖨️ 반별 채점 현황 인쇄 함수
         function printClassStatus() {
             if (currentSubmissions.length === 0) {
                 alert("먼저 인쇄할 학년과 반을 선택하고 [데이터 불러오기]를 눌러주세요.");
@@ -1123,9 +985,12 @@
 
             const grade = document.getElementById('filterGrade').value;
             const cls = document.getElementById('filterClass').value;
+
+            // 번호(연번) 순으로 정렬
             const sortedData = [...currentSubmissions].sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
 
             let printHtml = `
+
                 <style>
                     @page { size: portrait; margin: 15mm; } 
                 </style>
@@ -1147,11 +1012,14 @@
 
             sortedData.forEach(student => {
                 const num = student['번호'] || '';
+                // 학번이 시트에 없으면 학년+반+번호로 조합 (예: 2학년 3반 5번 -> 20305)
                 let hakbun = getFuzzy(student, ['학번']);
                 if (!hakbun && num) {
                     hakbun = `${grade}${cls.padStart(2, '0')}${String(num).padStart(2, '0')}`;
                 }
                 const name = student['이름'] || '';
+
+                // 항목별 점수 가져오기 (메모리에 있는 값 우선, 없으면 시트 원본 값)
                 const sc1 = student['score1'] || getFuzzy(student, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
                 const sc2 = student['score2'] || getFuzzy(student, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
                 const sc3 = student['score3'] || getFuzzy(student, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
@@ -1171,20 +1039,31 @@
             });
 
             printHtml += `</tbody></table>`;
+
+
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = printHtml;
-            printArea.style.display = 'block';
+            printArea.style.display = 'block'; // 인쇄를 위해 임시로 활성화
 
+            // DOM 업데이트 후 인쇄 창이 뜨도록 약간의 지연 시간 부여
             setTimeout(() => {
                 window.print();
-                printArea.style.display = 'none';
-                closePrintModal(); 
+                printArea.style.display = 'none'; // 인쇄 완료/취소 후 다시 숨김
+                closePrintModal(); // 인쇄 후 모달창도 닫아주면 더 깔끔합니다.
             }, 100);
+
+
+
+
+        }
+        function openPrintModal() {
+            document.getElementById('printModalOverlay').style.display = 'flex';
         }
 
-        function openPrintModal() { document.getElementById('printModalOverlay').style.display = 'flex'; }
-        function closePrintModal() { document.getElementById('printModalOverlay').style.display = 'none'; }
-
+        function closePrintModal() {
+            document.getElementById('printModalOverlay').style.display = 'none';
+        }
+        // 🖨️ [추가] 전체반 채점 현황 인쇄 함수
         function printAllClassesStatus() {
             const grade = document.getElementById('filterGrade').value;
             const tableContainer = document.getElementById('allClassesTableContainer');
@@ -1193,11 +1072,14 @@
                 alert("먼저 확인하실 '학년'을 선택해주세요.");
                 return;
             }
+
+            // 전체반 데이터가 화면에 렌더링되어 있는지 확인
             if (!tableContainer.innerHTML || tableContainer.innerHTML.includes('데이터를 계산 중') || tableContainer.innerHTML.includes('데이터가 없습니다')) {
                 alert("먼저 상단의 [전체반 채점확인] 버튼을 눌러 데이터를 화면에 불러와주세요.");
                 return;
             }
 
+            // 인쇄용 HTML 구성
             let printHtml = `
                 <style>
                     @page { size: landscape; margin: 10mm; }
@@ -1208,12 +1090,14 @@
 
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = printHtml;
-            printArea.style.display = 'block';
 
+            printArea.style.display = 'block'; // 인쇄 영역 활성화
+
+            // 💡 팁 알림창 띄우기 (옵션)
             setTimeout(() => {
                 window.print();
-                printArea.style.display = 'none';
-                closePrintModal(); 
+                printArea.style.display = 'none'; // 인쇄 완료 후 다시 숨김
+                closePrintModal(); // 모달 닫기
             }, 100);
         }
 
@@ -1224,6 +1108,8 @@
             }
 
             const s = selectedStudent;
+
+            // 데이터 추출 (기존 getFuzzy 활용)
             const grade = s['학년'] || '';
             const cls = s['반'] || '';
             const num = s['번호'] || '';
@@ -1239,64 +1125,72 @@
             const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
+            // 채점 및 피드백 데이터 (메모리에 있는 수정된 값 우선)
             const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
             const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
             const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
             const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
             const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
 
+            // 개별 학생 인쇄용 HTML 구성
             let printHtml = `
-            <style> @page { size: portrait; margin: 15mm; } </style>
-            <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px;">
-                <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
-                    학생 개별 답안 및 채점 결과
-                </div>
-                <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
-                    <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
-                </div>
-                <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
-                    <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
-                    <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
-                    <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
-                    <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
-                    <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
-                    <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
-                    <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
-                </table>
-                <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
-                    ✅ 평가 결과
-                </div>
-                <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
-                    <tr>
-                        <th style="text-align: center;">조사/재구성 (5점)</th>
-                        <th style="text-align: center;">현상 분석 (10점)</th>
-                        <th style="text-align: center;">가치 제시 (5점)</th>
-                        <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
-                    </tr>
-                    <tr>
-                        <td>${sc1}</td>
-                        <td>${sc2}</td>
-                        <td>${sc3}</td>
-                        <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
-                    </tr>
-                </table>
-                <div style="margin-top: 20px;">
-                    <strong>📝 채점 특이사항:</strong>
-                    <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
-                        ${feedback.replace(/\n/g, '<br>')}
-                    </div>
+        <style>
+            @page { size: portrait; margin: 15mm; } 
+        </style>
+        <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px;">
+            <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
+                학생 개별 답안 및 채점 결과
+            </div>
+            <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
+                <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+            </div>
+            
+            <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
+                <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
+                <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
+                <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
+                <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
+                <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
+                <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
+                <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
+            </table>
+
+            <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                ✅ 평가 결과
+            </div>
+            <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
+                <tr>
+                    <th style="text-align: center;">조사/재구성 (5점)</th>
+                    <th style="text-align: center;">현상 분석 (10점)</th>
+                    <th style="text-align: center;">가치 제시 (5점)</th>
+                    <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
+                </tr>
+                <tr>
+                    <td>${sc1}</td>
+                    <td>${sc2}</td>
+                    <td>${sc3}</td>
+                    <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 20px;">
+                <strong>📝 채점 특이사항:</strong>
+                <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
+                    ${feedback.replace(/\n/g, '<br>')}
                 </div>
             </div>
-            `;
+        </div>
+    `;
 
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = printHtml;
-            printArea.style.display = 'block';
+            printArea.style.display = 'block'; // 💡 수정됨: 수식을 계산하기 전에 인쇄 영역을 먼저 화면에 노출시킵니다.
 
+            // 수식이 포함되어 있으므로 MathJax 렌더링이 끝난 후 인쇄 실행
             if (window.MathJax) {
                 MathJax.typesetPromise([printArea]).then(() => {
                     window.print();
-                    printArea.style.display = 'none';
+                    printArea.style.display = 'none'; // 인쇄 후 다시 숨김
                     closePrintModal();
                 });
             } else {
@@ -1306,19 +1200,30 @@
             }
         }
 
+
+        // 🖨️ [추가] 선택한 학생들 연속 인쇄 함수
         function printSelectedStudents() {
+            // 1. 체크된 체크박스들을 모두 찾습니다.
             const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+
             if (checkedBoxes.length === 0) {
                 alert("인쇄할 학생을 체크박스에서 한 명 이상 선택해주세요.");
                 return;
             }
 
-            let combinedHtml = `<style>@page { size: portrait; margin: 10mm; }</style>`;
+            let combinedHtml = `
+        <style>
+            /* 용지 여백을 15mm에서 10mm로 줄여 공간 확보 */
+            @page { size: portrait; margin: 10mm; } 
+        </style>
+    `;
 
+            // 2. 체크된 학생들마다 인쇄용 HTML을 생성해서 합칩니다.
             checkedBoxes.forEach((box, index) => {
                 const studentIndex = box.value;
                 const s = currentSubmissions[studentIndex];
 
+                // 데이터 추출
                 const grade = s['학년'] || '';
                 const cls = s['반'] || '';
                 const num = s['번호'] || '';
@@ -1340,57 +1245,66 @@
                 const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
                 const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
 
+                // 💡 중요: page-break-after: always; 를 주어 학생마다 새 페이지에 인쇄되도록 합니다.
                 const pageBreakStyle = (index < checkedBoxes.length - 1) ? 'page-break-after: always;' : '';
 
+                // 📝 전체적인 글자 크기를 10pt로 줄이고, 각 요소의 여백(margin/padding)을 축소함
                 let singleHtml = `
-                <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 5px; font-size: 10pt; ${pageBreakStyle}">
-                    <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 10px;">
-                        학생 개별 답안 및 채점 결과
-                    </div>
-                    <div style="margin-bottom: 10px; font-size: 1.05em; text-align: right;">
-                        <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
-                    </div>
-                    <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 10px;">
-                        <tr><th style="width: 20%; text-align: center; padding: 5px;">기사 제목</th><td style="padding-left: 8px; padding: 5px;"><strong>${title}</strong></td></tr>
-                        <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
-                        <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
-                        <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">\\(${cleanFormula}\\)</td></tr>
-                        <tr><th style="text-align: center; padding: 5px;">(1) 수학적 특징</th><td style="padding-left: 8px; padding: 5px;">${obs1}</td></tr>
-                        <tr><th style="text-align: center; padding: 5px;">(2) 현상 해석</th><td style="padding-left: 8px; padding: 5px;">${obs2}</td></tr>
-                        <tr><th style="text-align: center; padding: 5px;">(3) 가치 성찰</th><td style="padding-left: 8px; padding: 5px;">${obs3}</td></tr>
-                    </table>
-                    <div style="margin-top: 15px; font-size: 1.1em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
-                        ✅ 평가 결과
-                    </div>
-                    <table class="print-table" style="width: 100%; margin-top: 5px; text-align: center;">
-                        <tr>
-                            <th style="text-align: center; padding: 5px;">조사/재구성 (5점)</th>
-                            <th style="text-align: center; padding: 5px;">현상 분석 (10점)</th>
-                            <th style="text-align: center; padding: 5px;">가치 제시 (5점)</th>
-                            <th style="text-align: center; background-color: #f1c40f !important; padding: 5px;">총점 (20점)</th>
-                        </tr>
-                        <tr>
-                            <td style="padding: 5px;">${sc1}</td>
-                            <td style="padding: 5px;">${sc2}</td>
-                            <td style="padding: 5px;">${sc3}</td>
-                            <td style="padding: 5px;"><strong style="font-size: 1.1em; color: #d35400;">${total}</strong></td>
-                        </tr>
-                    </table>
-                    <div style="margin-top: 10px;">
-                        <strong>📝 채점 특이사항:</strong>
-                        <div style="padding: 8px; border: 1px solid #000; border-radius: 5px; margin-top: 5px; line-height: 1.4;">
-                            ${feedback.replace(/\n/g, '<br>')}
-                        </div>
-                    </div>
+        <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 5px; font-size: 10pt; ${pageBreakStyle}">
+            <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 10px;">
+                학생 개별 답안 및 채점 결과
+            </div>
+            <div style="margin-bottom: 10px; font-size: 1.05em; text-align: right;">
+                <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+            </div>
+            
+            <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 10px;">
+                <tr><th style="width: 20%; text-align: center; padding: 5px;">기사 제목</th><td style="padding-left: 8px; padding: 5px;"><strong>${title}</strong></td></tr>
+                <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
+              
+            <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">\\(${cleanFormula}\\)</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(1) 수학적 특징</th><td style="padding-left: 8px; padding: 5px;">${obs1}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(2) 현상 해석</th><td style="padding-left: 8px; padding: 5px;">${obs2}</td></tr>
+                <tr><th style="text-align: center; padding: 5px;">(3) 가치 성찰</th><td style="padding-left: 8px; padding: 5px;">${obs3}</td></tr>
+            </table>
+
+            <div style="margin-top: 15px; font-size: 1.1em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                ✅ 평가 결과
+            </div>
+            <table class="print-table" style="width: 100%; margin-top: 5px; text-align: center;">
+                <tr>
+                    <th style="text-align: center; padding: 5px;">조사/재구성 (5점)</th>
+                    <th style="text-align: center; padding: 5px;">현상 분석 (10점)</th>
+                    <th style="text-align: center; padding: 5px;">가치 제시 (5점)</th>
+                    <th style="text-align: center; background-color: #f1c40f !important; padding: 5px;">총점 (20점)</th>
+                </tr>
+                <tr>
+                    <td style="padding: 5px;">${sc1}</td>
+                    <td style="padding: 5px;">${sc2}</td>
+                    <td style="padding: 5px;">${sc3}</td>
+                    <td style="padding: 5px;"><strong style="font-size: 1.1em; color: #d35400;">${total}</strong></td>
+                </tr>
+            </table>
+
+            <div style="margin-top: 10px;">
+                <strong>📝 채점 특이사항:</strong>
+                <div style="padding: 8px; border: 1px solid #000; border-radius: 5px; margin-top: 5px; line-height: 1.4;">
+                    ${feedback.replace(/\n/g, '<br>')}
                 </div>
-                `;
+            </div>
+        </div>
+        `;
+
                 combinedHtml += singleHtml;
             });
 
+            // 3. 만들어진 긴 HTML을 인쇄 영역에 넣고 처리합니다.
             const printArea = document.getElementById('printArea');
             printArea.innerHTML = combinedHtml;
             printArea.style.display = 'block';
 
+            // 수식이 포함되어 있으므로 MathJax 렌더링이 끝난 후 인쇄 실행
             if (window.MathJax) {
                 MathJax.typesetPromise([printArea]).then(() => {
                     window.print();
@@ -1404,6 +1318,9 @@
             }
         }
 
+
+
+        //🤖 AI 생기부 프롬프트 생성 및 복사 함수(수식 제외 및 요약능력 강조 버전)
         function copyAIPrompt() {
             if (!selectedStudent) {
                 alert("학생을 먼저 선택해주세요.");
@@ -1411,16 +1328,23 @@
             }
 
             const s = selectedStudent;
+
+            // 학생 데이터 추출
             const name = s['이름'] || '';
             const funcArea = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '미지정';
             const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
             const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+
+            // 함수식은 NEIS 기재 불가하므로 프롬프트 추출에서 제외합니다.
+
             const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
             const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
             const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
             const total = document.getElementById('totalScore').value || '미채점';
             const feedback = document.getElementById('teacherFeedback').value || '피드백 없음';
 
+            // AI에게 전달할 완벽한 프롬프트(명령어) 템플릿 구성
             const promptText = `당신은 고등학교 2학년 '대수' 과목을 가르치는 전문적이고 통찰력 있는 수학 교사입니다. 
 다음은 우리 반 학생(${name})이 제출한 '함수 기사문 작성' 수행평가 결과물과 교사의 평가 내용입니다. 
 
@@ -1446,6 +1370,7 @@
 5. 학생의 '대수적 사고력', '문제해결역량', '정보 처리 역량'이 돋보이도록 학업 역량 위주로 서술하세요.
 6. 출력 결과물에는 다른 부연 설명 없이 생기부에 들어갈 문장만 딱 출력해 주세요.`;
 
+            // 클립보드에 복사하기
             navigator.clipboard.writeText(promptText).then(() => {
                 alert(`✅ ${name} 학생의 AI 생기부 프롬프트가 복사되었습니다!\n(수식 제외 및 요약능력 강조 적용 완료)\n\nChatGPT나 Gemini 입력창에 '붙여넣기(Ctrl+V)' 하세요.`);
             }).catch(err => {
@@ -1454,14 +1379,16 @@
             });
         }
     </script>
-    
     <div id="printArea" style="display: none;"></div>
+
+
 
     <div class="modal-overlay" id="printModalOverlay">
         <div class="print-modal">
             <h3>🖨️ 무엇을 인쇄할까요?</h3>
             <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
             <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 1명 개별 답안 인쇄</button>
+
             <button class="print-option-btn" style="background:#fef9e7; border-color:#f1c40f;"
                 onclick="printSelectedStudents()">☑️ 선택한 학생들 연속 인쇄</button>
             <button class="print-option-btn" style="background:#e8f4fd; border-color:#3498db;"
@@ -1469,5 +1396,7 @@
             <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
         </div>
     </div>
+
 </body>
+
 </html>
