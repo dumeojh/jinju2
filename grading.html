@@ -1003,7 +1003,7 @@
                 </div>
             `;
 
-            currentSubmissions.sort((a, b) => parseInt(a['번호']) - parseInt(b['번호']));
+            currentSubmissions.sort((a, b) => (parseInt(a['번호']) || 0) - (parseInt(b['번호']) || 0));
             currentSubmissions.forEach((student, index) => {
                 const item = document.createElement('div');
                 item.className = 'student-item';
