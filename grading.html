@@ -666,18 +666,25 @@
                         <div class="grading-split">
                             <div class="grading-left">
                                 <h3 style="margin-top:0; margin-bottom:20px; color:#d35400;">📝 세부 평가 항목</h3>
+
+
                                 <div class="score-row">
                                     <label>실세계 현상 조사 및<br>재구성하기 (5점)</label>
-                                    <input type="number" id="score1" min="0" max="5" oninput="calculateTotal()">
+                                    <input type="number" id="score1" min="0" max="5" oninput="calculateTotal()"
+                                        onfocus="this.select()">
                                 </div>
                                 <div class="score-row">
                                     <label>함수 개념을 통해<br>현상 분석하기 (10점)</label>
-                                    <input type="number" id="score2" min="0" max="10" oninput="calculateTotal()">
+                                    <input type="number" id="score2" min="0" max="10" oninput="calculateTotal()"
+                                        onfocus="this.select()">
                                 </div>
                                 <div class="score-row">
                                     <label>대수 개념의 유용성<br>가치 제시하기 (5점)</label>
-                                    <input type="number" id="score3" min="0" max="5" oninput="calculateTotal()">
+                                    <input type="number" id="score3" min="0" max="5" oninput="calculateTotal()"
+                                        onfocus="this.select()">
                                 </div>
+
+
                             </div>
 
                             <div class="grading-right">
@@ -820,9 +827,10 @@
                     <tr>
                         <td><strong>${s['번호']}</strong></td>
                         <td>${s['이름']}</td>
-                        <td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})"></td>
-                        <td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})"></td>
-                        <td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})"></td>
+<td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
+                       
                         <td><input type="number" id="b_tot_${index}" value="${total}" readonly style="background:#f4f6f7; border-color:#d35400; color:#d35400; font-weight:bold;"></td>
                         <td><input type="text" id="b_fb_${index}" value="${feedback}" placeholder="특이사항 작성"></td>
                         <td><button class="btn-row-save" id="b_btn_${index}" onclick="saveBatchRow(${index})">저장</button></td>
