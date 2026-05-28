@@ -1498,6 +1498,11 @@
                     printArea.style.display = 'none';
                     closePrintModal();
                 });
+            } else {
+                // MathJax 로드 실패 시에도 기본 인쇄창 띄우기
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
             }
 
 
