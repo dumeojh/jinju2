@@ -831,10 +831,9 @@
                     <tr>
                         <td><strong>${s['번호']}</strong></td>
                         <td>${s['이름']}</td>
-<td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
-<td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
-<td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})" onfocus="this.select()"></td>
-                       
+<td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>                  
                         <td><input type="number" id="b_tot_${index}" value="${total}" readonly style="background:#f4f6f7; border-color:#d35400; color:#d35400; font-weight:bold;"></td>
                         <td><input type="text" id="b_fb_${index}" value="${feedback}" placeholder="특이사항 작성"></td>
                         <td><button class="btn-row-save" id="b_btn_${index}" onclick="saveBatchRow(${index})">저장</button></td>
