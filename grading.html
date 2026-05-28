@@ -1374,114 +1374,47 @@
             }, 100);
         }
 
-        function printIndividualStudent() {
-            if (!selectedStudent) {
-                alert("먼저 왼쪽 명단에서 인쇄할 학생을 선택해주세요.");
-                return;
-            }
 
-            const s = selectedStudent;
-            const grade = s['학년'] || '';
-            const cls = s['반'] || '';
-            const num = s['번호'] || '';
-            const name = s['이름'] || '';
 
-            const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
-            const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
-            const dataPoints = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
-            let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
-            let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
 
-            const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
-            const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
-            const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
 
-            const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
-            const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
-            const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
-            const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
-            const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
-
-            let printHtml = `
-            <style> @page { size: portrait; margin: 15mm; } </style>
-            <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 10px;">
-                <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px;">
-                    학생 개별 답안 및 채점 결과
-                </div>
-                <div style="margin-bottom: 15px; font-size: 1.1em; text-align: right;">
-                    <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
-                </div>
-                <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 20px;">
-                    <tr><th style="width: 20%; text-align: center;">기사 제목</th><td style="padding-left: 10px;"><strong>${title}</strong></td></tr>
-                    <tr><th style="text-align: center;">선정 이유</th><td style="padding-left: 10px;">${reason}</td></tr>
-                    <tr><th style="text-align: center;">입력 데이터</th><td style="padding-left: 10px;">${dataPoints}</td></tr>
-                    <tr><th style="text-align: center;">산출된 함수식</th><td style="text-align: center; font-size: 1.2em; padding: 15px;">\\[${cleanFormula}\\]</td></tr>
-                    <tr><th style="text-align: center;">(1) 수학적 특징</th><td style="padding-left: 10px;">${obs1}</td></tr>
-                    <tr><th style="text-align: center;">(2) 현상 해석</th><td style="padding-left: 10px;">${obs2}</td></tr>
-                    <tr><th style="text-align: center;">(3) 가치 성찰</th><td style="padding-left: 10px;">${obs3}</td></tr>
-                </table>
-                <div style="margin-top: 30px; font-size: 1.2em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
-                    ✅ 평가 결과
-                </div>
-                <table class="print-table" style="width: 100%; margin-top: 10px; text-align: center;">
-                    <tr>
-                        <th style="text-align: center;">조사/재구성 (5점)</th>
-                        <th style="text-align: center;">현상 분석 (10점)</th>
-                        <th style="text-align: center;">가치 제시 (5점)</th>
-                        <th style="text-align: center; background-color: #f1c40f !important;">총점 (20점)</th>
-                    </tr>
-                    <tr>
-                        <td>${sc1}</td>
-                        <td>${sc2}</td>
-                        <td>${sc3}</td>
-                        <td><strong style="font-size: 1.2em; color: #d35400;">${total}</strong></td>
-                    </tr>
-                </table>
-                <div style="margin-top: 20px;">
-                    <strong>📝 채점 특이사항:</strong>
-                    <div style="padding: 15px; border: 1px solid #000; border-radius: 5px; margin-top: 10px; min-height: 80px; line-height: 1.6;">
-                        ${feedback.replace(/\n/g, '<br>')}
-                    </div>
-                </div>
-            </div>
-            `;
-
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = printHtml;
-            printArea.style.display = 'block';
-
-            if (window.MathJax) {
-                MathJax.typesetPromise([printArea]).then(() => {
-                    window.print();
-                    printArea.style.display = 'none';
-                    closePrintModal();
-                });
-            } else {
-                window.print();
-                printArea.style.display = 'none';
-                closePrintModal();
-            }
-        }
-
-        function printSelectedStudents() {
+        // 🌟 통합된 학생 답안 인쇄 함수 (개별/연속 모두 처리)
+        function printStudentAnswers() {
             const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
-            if (checkedBoxes.length === 0) {
-                alert("인쇄할 학생을 체크박스에서 한 명 이상 선택해주세요.");
+            let studentsToPrint = [];
+
+            // 1. 체크박스에 선택된 학생이 있는지 먼저 확인
+            if (checkedBoxes.length > 0) {
+                checkedBoxes.forEach(box => {
+                    const studentIndex = box.value;
+                    studentsToPrint.push(currentSubmissions[studentIndex]);
+                });
+            }
+            // 2. 체크된 학생이 없으면 현재 화면에 열려있는(선택된) 학생 확인
+            else if (selectedStudent) {
+                studentsToPrint.push(selectedStudent);
+            }
+
+            // 3. 둘 다 없으면 경고창
+            if (studentsToPrint.length === 0) {
+                alert("인쇄할 학생을 체크박스에서 선택하거나 왼쪽 명단에서 클릭해주세요.");
                 return;
             }
 
             let combinedHtml = `<style>@page { size: portrait; margin: 10mm; }</style>`;
 
-            checkedBoxes.forEach((box, index) => {
-                const studentIndex = box.value;
-                const s = currentSubmissions[studentIndex];
-
+            studentsToPrint.forEach((s, index) => {
                 const grade = s['학년'] || '';
                 const cls = s['반'] || '';
                 const num = s['번호'] || '';
                 const name = s['이름'] || '';
 
                 const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+                // 🌟 참고 자료 불러오기
+                const ref1 = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
+                const ref2 = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
+                const ref3 = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
+
                 const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
                 const dataPoints = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
                 let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
@@ -1497,7 +1430,8 @@
                 const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
                 const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
 
-                const pageBreakStyle = (index < checkedBoxes.length - 1) ? 'page-break-after: always;' : '';
+                // 마지막 학생이 아니면 페이지 나누기 적용
+                const pageBreakStyle = (index < studentsToPrint.length - 1) ? 'page-break-after: always;' : '';
 
                 let singleHtml = `
                 <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 5px; font-size: 10pt; ${pageBreakStyle}">
@@ -1509,6 +1443,7 @@
                     </div>
                     <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 10px;">
                         <tr><th style="width: 20%; text-align: center; padding: 5px;">기사 제목</th><td style="padding-left: 8px; padding: 5px;"><strong>${title}</strong></td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">참고 자료</th><td style="padding-left: 8px; padding: 5px; line-height: 1.4;">1. ${ref1}<br>2. ${ref2}<br>3. ${ref3}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
                         <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">\\(${cleanFormula}\\)</td></tr>
@@ -1618,14 +1553,17 @@
         <div class="print-modal">
             <h3>🖨️ 무엇을 인쇄할까요?</h3>
             <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
-            <button class="print-option-btn" onclick="printIndividualStudent()">📄 선택된 1명 개별 답안 인쇄</button>
+
             <button class="print-option-btn" style="background:#fef9e7; border-color:#f1c40f;"
-                onclick="printSelectedStudents()">☑️ 선택한 학생들 연속 인쇄</button>
+                onclick="printStudentAnswers()">📄 학생 개별/연속 답안 인쇄</button>
+
             <button class="print-option-btn" style="background:#e8f4fd; border-color:#3498db;"
                 onclick="printAllClassesStatus()">🏫 전체 반 채점 결과 인쇄</button>
             <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
         </div>
     </div>
+
+
 </body>
 
 </html>
