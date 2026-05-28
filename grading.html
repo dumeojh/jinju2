@@ -1180,10 +1180,14 @@
             let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
             let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
             formulaDiv.innerHTML = cleanFormula;
-            if (window.MathJax && MathJax.typesetClear) {
-                MathJax.typesetClear([formulaDiv]); // 이전 렌더링 캐시 초기화
+
+
+            if (window.MathJax) {
+                if (MathJax.typesetClear) {
+                    MathJax.typesetClear([formulaDiv]); // 이전 렌더링 캐시 초기화
+                }
+                MathJax.typesetPromise([formulaDiv]);
             }
-            MathJax.typesetPromise([formulaDiv]);
 
             document.getElementById('score1').value = getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기', '채점_특징(20점)', 'score1']) || '';
             document.getElementById('score2').value = getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기', '채점_해석(20점)', 'score2']) || '';
