@@ -1446,7 +1446,8 @@
                         <tr><th style="text-align: center; padding: 5px;">참고 자료</th><td style="padding-left: 8px; padding: 5px; line-height: 1.4;">1. ${ref1}<br>2. ${ref2}<br>3. ${ref3}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
-                        <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">\\(${cleanFormula}\\)</td></tr>
+                      
+                      <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">${cleanFormula}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">(1) 수학적 특징</th><td style="padding-left: 8px; padding: 5px;">${obs1}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">(2) 현상 해석</th><td style="padding-left: 8px; padding: 5px;">${obs2}</td></tr>
                         <tr><th style="text-align: center; padding: 5px;">(3) 가치 성찰</th><td style="padding-left: 8px; padding: 5px;">${obs3}</td></tr>
@@ -1483,17 +1484,20 @@
             printArea.innerHTML = combinedHtml;
             printArea.style.display = 'block';
 
+
+
             if (window.MathJax) {
+                if (MathJax.typesetClear) {
+                    MathJax.typesetClear([printArea]); // 인쇄 영역 캐시 초기화 추가
+                }
                 MathJax.typesetPromise([printArea]).then(() => {
                     window.print();
                     printArea.style.display = 'none';
                     closePrintModal();
                 });
-            } else {
-                window.print();
-                printArea.style.display = 'none';
-                closePrintModal();
             }
+
+
         }
 
         function copyAIPrompt() {
