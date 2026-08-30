@@ -202,6 +202,44 @@
             border-radius: 12px;
         }
 
+        #derivSection {
+            margin-bottom: 30px;
+        }
+
+        .deriv-line {
+            font-size: 1.35em;
+            text-align: center;
+            padding: 18px 10px;
+            background: #f4f9fd;
+            border: 1px solid #d6e6f5;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            line-height: 2.2;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .dblank {
+            width: 78px !important;
+            padding: 8px !important;
+            text-align: center;
+            font-size: 1em;
+            font-weight: bold;
+            border: 2px solid var(--accent) !important;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 0 2px;
+            background: #fff;
+        }
+
+        #derivResult {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 12px;
+            font-size: 1.05em;
+            min-height: 1.2em;
+        }
+
         #outFormula {
             text-align: center;
             font-size: 1.6em;
@@ -290,14 +328,14 @@
             <div class="section">
                 <div class="section-title">1. 분석 영역 선택</div>
                 <div class="guide-box">
-                    자신이 조사할 자료의 변화 패턴에 맞는 함수 영역을 선택하세요.<br>
-                    <b>선택한 영역에 따라 추세선의 종류와 산출되는 함수식이 달라집니다.</b>
+                    자신이 조사할 자료의 변화 패턴에 맞는 다항함수를 선택하세요.<br>
+                    <b>선택한 차수에 따라 추세선이 3차 또는 4차 다항함수로 만들어지며, 모든 계수는 소수 첫째 자리까지 반올림됩니다.</b><br>
+                    (증가·감소가 한 번 바뀌면 3차함수, 두 번 이상 바뀌면 4차함수가 적합합니다.)
                 </div>
                 <select id="funcArea" onchange="updateArea()">
                     <option value="">-- 영역 선택 --</option>
-                    <option value="지수함수">지수함수 영역</option>
-                    <option value="로그함수">로그함수 영역</option>
-                    <option value="삼각함수">삼각함수 영역</option>
+                    <option value="3차함수">3차함수 영역</option>
+                    <option value="4차함수">4차함수 영역</option>
                 </select>
             </div>
 
@@ -341,9 +379,21 @@
                 <canvas id="mainChart"></canvas>
                 <div id="outFormula"></div>
 
+                <div id="derivSection">
+                    <div class="section-title" style="margin-top:10px;">5-1. 도함수 구하기 (미분)</div>
+                    <div class="guide-box">
+                        위에서 산출된 함수 <b>f(x)</b>를 미분하여, 아래 <b>네모 칸에 각 항의 계수만</b> 써 넣으시오.<br>
+                        (부호가 음수이면 &minus; 를 함께 입력하고, 값은 소수 첫째 자리까지 씁니다. 예: -4.8)
+                    </div>
+                    <div class="deriv-line" id="derivGiven"></div>
+                    <div class="deriv-line" id="derivBlank"></div>
+                    <button class="btn btn-calc no-print" onclick="checkDeriv()">정답 확인</button>
+                    <div id="derivResult"></div>
+                </div>
+
                 <div class="observation-box">
                     <label><b>(1) 그래프의 수학적 특징</b></label>
-                    <div class="guide-box">해당 함수의 수학적 성질(증가/감소 여부, 점근선, 주기성 등)을 식과 그래프의 형태를 바탕으로 서술하시오.</div>
+                    <div class="guide-box">도함수 f'(x)를 이용하여 구간별 함수의 증가와 감소, 극대와 극소를 판정하고 그 과정을 미분 개념으로 설명하시오.</div>
                     <textarea id="obs1" placeholder="이곳에 내용을 작성하세요..." rows="4"></textarea>
 
                     <label style="margin-top:15px; display:block;"><b>(2) 실세계 현상 해석</b></label>
@@ -564,6 +614,11 @@
 
         let chartInstance = null;
         let studentInfoText = "";
+        let polyCoeffs = [];      // 산출된 다항함수 계수 (내림차순)
+        let polyOrder = 0;        // 3 또는 4
+        let derivAnswers = [];    // 도함수 계수 정답
+        let derivTry = 0;         // 정답 확인 횟수
+        let derivCorrect = false; // 최종 정답 여부
 
         /** 본문에서 분석 영역을 고르면 상단 안내 문구를 갱신 **/
         function updateArea() {
@@ -581,72 +636,127 @@
                 return;
             }
 
+            const order = (area === '3차함수') ? 3 : 4;
+
             let pts = [];
             const xs = document.querySelectorAll('.ix'), ys = document.querySelectorAll('.iy');
             for (let i = 0; i < 10; i++) if (xs[i].value && ys[i].value) pts.push([parseFloat(xs[i].value), parseFloat(ys[i].value)]);
 
-            if (pts.length < 3) { alert("데이터를 3개 이상 입력하세요."); return; }
+            if (pts.length < order + 2) {
+                alert(`${area} 추세선을 만들려면 데이터가 최소 ${order + 2}개 필요합니다.`);
+                return;
+            }
             pts.sort((a, b) => a[0] - b[0]);
 
-            let res;
-            let latexFormula = "";
+            /** 다항 회귀 후 모든 계수를 소수 첫째 자리로 반올림 **/
+            const raw = regression.polynomial(pts, { order: order, precision: 10 });
+            polyCoeffs = raw.equation.map(v => Math.round(v * 10) / 10);   // 내림차순 [최고차 ... 상수]
+            polyOrder = order;
 
-            if (area === '지수함수') {
-                res = regression.exponential(pts);
-                const a = res.equation[0].toFixed(4);
-                const b = res.equation[1].toFixed(4);
-                latexFormula = `\\( y = ${a} \\cdot e^{${b}x} \\)`;
+            if (Math.abs(polyCoeffs[0]) < 0.05) {
+                alert("최고차항의 계수가 0.0으로 반올림되었습니다.\n\nx의 값을 1, 2, 3 … 처럼 작은 수(예: 연도 대신 경과 연수)로 바꾸어 다시 입력하세요.");
+                return;
             }
-            else if (area === '로그함수') {
-                res = regression.logarithmic(pts);
-                const a = res.equation[0].toFixed(4);
-                const b = res.equation[1].toFixed(4);
-                latexFormula = `\\( y = ${a} + ${b} \\ln(x) \\)`;
-            }
-            else if (area === '삼각함수') {
-                let maxY = -Infinity, minY = Infinity;
-                let xOfMax = 0, xOfMin = 0;
 
-                pts.forEach(p => {
-                    if (p[1] > maxY) { maxY = p[1]; xOfMax = p[0]; }
-                    if (p[1] < minY) { minY = p[1]; xOfMin = p[0]; }
-                });
+            /** 반올림된 계수로 만든 함수 (그래프·도함수와 완전히 일치) **/
+            const res = { predict: x => [x, polyValue(polyCoeffs, order, x)] };
 
-                if (maxY === minY || xOfMax === xOfMin) {
-                    alert("삼각함수 분석을 위해서는 값이 다른 최소 2개(최고점, 최저점)의 데이터가 필요합니다.");
-                    return;
-                }
-
-                let A = (maxY - minY) / 2;
-                let D = (maxY + minY) / 2;
-                let halfPeriod = Math.abs(xOfMax - xOfMin);
-                let B = Math.PI / halfPeriod;
-                let C = xOfMax;
-
-                res = { predict: function (x) { return [x, A * Math.cos(B * (x - C)) + D]; } };
-
-                const A_f = A.toFixed(4);
-                const B_f = B.toFixed(4);
-                const C_f = Math.abs(C).toFixed(4);
-                const D_f = Math.abs(D).toFixed(4);
-
-                let signC = C >= 0 ? `-${C_f}` : `+${C_f}`;
-                let signD = D >= 0 ? `+${D_f}` : `-${D_f}`;
-
-                latexFormula = `\\( y = ${A_f} \\cos(${B_f}(x ${signC})) ${signD} \\)`;
-            }
+            const latexFormula = `\\( f(x) = ${polyLatex(polyCoeffs, order)} \\)`;
 
             const formulaDiv = document.getElementById('outFormula');
-            formulaDiv.innerHTML = `<b>산출된 함수식</b><br>${latexFormula}`;
+            formulaDiv.innerHTML = `<b>산출된 ${area}</b><br>${latexFormula}`;
             MathJax.typesetPromise([formulaDiv]);
 
+            buildDerivQuestion();
+
             document.getElementById('analysisArea').style.display = 'block';
-            drawChart(pts, res, area);
+            drawChart(pts, res);
 
             document.getElementById('analysisArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function drawChart(pts, res, area) {
+        /** 다항식 값 계산 (계수는 내림차순) **/
+        function polyValue(c, order, x) {
+            return c.reduce((sum, v, i) => sum + v * Math.pow(x, order - i), 0);
+        }
+
+        /** 다항식을 LaTeX 문자열로 (계수는 내림차순) **/
+        function polyLatex(c, topPower) {
+            let out = '';
+            c.forEach((v, i) => {
+                const p = topPower - i;
+                const abs = Math.abs(v).toFixed(1);
+                out += (i === 0) ? (v < 0 ? '-' : '') : (v < 0 ? ' - ' : ' + ');
+                out += abs + (p > 1 ? `x^{${p}}` : (p === 1 ? 'x' : ''));
+            });
+            return out;
+        }
+
+        /** 도함수 빈칸 문제 생성 **/
+        function buildDerivQuestion() {
+            derivAnswers = [];
+            for (let i = 0; i < polyOrder; i++) {
+                const power = polyOrder - i;                       // 원래 항의 차수
+                derivAnswers.push(Math.round(polyCoeffs[i] * power * 10) / 10);
+            }
+            derivTry = 0;
+            derivCorrect = false;
+
+            document.getElementById('derivGiven').innerHTML =
+                `f(x) = ${polyPlain(polyCoeffs, polyOrder)}`;
+
+            let html = `f&thinsp;&prime;(x) = `;
+            derivAnswers.forEach((v, i) => {
+                const p = polyOrder - 1 - i;
+                if (i > 0) html += ` + `;
+                html += `<input type="number" step="0.1" class="dblank" data-i="${i}" placeholder="?">`;
+                html += (p > 1 ? `x<sup>${p}</sup>` : (p === 1 ? 'x' : ''));
+            });
+            document.getElementById('derivBlank').innerHTML = html;
+            document.getElementById('derivResult').innerHTML = '';
+        }
+
+        /** 화면 표시용 일반 텍스트 다항식 **/
+        function polyPlain(c, topPower) {
+            let out = '';
+            c.forEach((v, i) => {
+                const p = topPower - i;
+                const abs = Math.abs(v).toFixed(1);
+                out += (i === 0) ? (v < 0 ? '-' : '') : (v < 0 ? ' - ' : ' + ');
+                out += abs + (p > 1 ? `x<sup>${p}</sup>` : (p === 1 ? 'x' : ''));
+            });
+            return out;
+        }
+
+        /** 제출용 순수 텍스트 다항식 **/
+        function polyPlainText(c, topPower) {
+            return polyPlain(c, topPower).replace(/<sup>(\d+)<\/sup>/g, '^$1');
+        }
+
+        /** 도함수 정답 확인 **/
+        function checkDeriv() {
+            const inputs = [...document.querySelectorAll('.dblank')];
+            if (!inputs.length) { alert("먼저 4번 항목에서 그래프와 식을 생성하세요."); return; }
+            if (inputs.some(i => i.value === '')) { alert("모든 네모 칸에 숫자를 입력하세요."); return; }
+
+            let ok = 0;
+            inputs.forEach(inp => {
+                const ans = derivAnswers[parseInt(inp.dataset.i)];
+                const good = Math.abs(parseFloat(inp.value) - ans) < 0.05;
+                inp.style.borderColor = good ? '#27ae60' : '#e74c3c';
+                inp.style.background = good ? '#eafaf1' : '#fdecea';
+                if (good) ok++;
+            });
+
+            derivTry++;
+            derivCorrect = (ok === inputs.length);
+
+            document.getElementById('derivResult').innerHTML = derivCorrect
+                ? `<span style="color:#27ae60;">✅ 정답입니다! (${derivTry}회 시도)</span>`
+                : `<span style="color:#e74c3c;">❌ ${inputs.length}개 중 ${ok}개 정답입니다. 다시 계산해 보세요. (${derivTry}회 시도)</span>`;
+        }
+
+        function drawChart(pts, res) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
 
@@ -654,7 +764,7 @@
             const maxX = Math.max(...pts.map(p => p[0]));
             let range = maxX - minX === 0 ? 1 : maxX - minX;
 
-            let padding = area === '삼각함수' ? range * 0.5 : range * 0.1;
+            let padding = range * 0.1;
             let startX = minX - padding;
             let endX = maxX + padding;
 
@@ -723,7 +833,11 @@
                 ref3: refs[2].value,
                 reason: document.getElementById('reason').value,
                 dataPoints: ptsArr.join(', '),
-                formula: document.getElementById('outFormula').innerText.replace("산출된 함수식", "").trim(),
+                formula: polyCoeffs.length ? `f(x) = ${polyPlainText(polyCoeffs, polyOrder)}` : '',
+                derivAnswer: derivAnswers.join(', '),
+                derivInput: [...document.querySelectorAll('.dblank')].map(i => i.value || '(미입력)').join(', '),
+                derivResult: derivTry === 0 ? '미시도' : (derivCorrect ? '정답' : '오답'),
+                derivTry: derivTry,
                 obs1: document.getElementById('obs1').value,
                 obs2: document.getElementById('obs2').value,
                 obs3: document.getElementById('obs3').value,
