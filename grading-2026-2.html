@@ -468,7 +468,7 @@
 
             <!-- 도구 모음 -->
             <div class="toolbar no-print">
-                <button class="btn btn-load" onclick="loadFromSheet()">🔄 구글 시트에서 제출물 불러오기</button>
+                <button class="btn btn-load" onclick="loadFromSupabase()">🔄 수파베이스에서 제출물 불러오기</button>
                 <button class="btn btn-ghost" onclick="togglePaste()">📋 시트 붙여넣기</button>
                 <label style="margin:0;">
                     <span class="btn btn-ghost" style="display:inline-block;">📁 CSV 열기</span>
@@ -525,7 +525,13 @@
         const ASSESS_ID = "2026-2-01";         // 평가 회차 식별자 (저장 키에 사용)
         // ============================================================================
 
-        const GOOGLE_SCRIPT_URL = (typeof BASE_SCRIPT_URL !== 'undefined') ? BASE_SCRIPT_URL : '';
+        /** ---------------- 수파베이스 접속 ---------------- **/
+        const SB_READY = (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined');
+        const SB_HEADERS = SB_READY ? {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+        } : {};
 
         /** 채점 기준표 (수행평가 세부 기준 이미지 기준) **/
         const RUBRIC = [
@@ -601,7 +607,8 @@
         /** ---------------- 데이터 불러오기 ---------------- **/
         // 헤더 이름 → 내부 필드명 매핑 (영문 키 / 한글 헤더 모두 지원)
         const FIELD_MAP = [
-            ['timestamp', ['timestamp', '제출시간', '타임스탬프', '시간', '날짜']],
+            ['id', ['id']],
+            ['timestamp', ['timestamp', 'createdat', '제출시간', '타임스탬프', '시간', '날짜']],
             ['grade', ['grade', '학년']],
             ['stuClass', ['stuclass', 'class', '반', '학급']],
             ['stuNum', ['stunum', 'num', '번호']],
@@ -615,9 +622,8 @@
             ['formula', ['formula', '함수식', '식', '추세선']],
             ['obs1', ['obs1', '서술1', '관찰1', '수학적특징']],
             ['obs2', ['obs2', '서술2', '관찰2', '실세계해석']],
-            ['obs3', ['obs3', '서술3', '관찰3', '성찰']],
             ['submitType', ['submittype', '제출유형', '유형']],
-            ['warning', ['warning', '경고', '경고내역']]
+            ['warning', ['warning', 'warncount', '경고', '경고내역']]
         ];
 
         function normKey(h) {
@@ -636,25 +642,24 @@
             return out;
         }
 
-        async function loadFromSheet() {
-            if (!GOOGLE_SCRIPT_URL) {
-                alert("config.js의 BASE_SCRIPT_URL이 설정되어 있지 않습니다.\n[시트 붙여넣기] 또는 [CSV 열기]를 이용하세요.");
+        async function loadFromSupabase() {
+            if (!SB_READY) {
+                alert("config.js에 SUPABASE_URL / SUPABASE_ANON_KEY가 설정되어 있지 않습니다.\n[시트 붙여넣기] 또는 [CSV 열기]를 이용하세요.");
                 return;
             }
             try {
-                const res = await fetch(GOOGLE_SCRIPT_URL + "?action=getSubmissions");
-                const json = await res.json();
-                let rows = Array.isArray(json) ? json : (json.data || json.rows || json.result || []);
+                const url = `${SUPABASE_URL}/rest/v1/${SB_TABLE_SUBMISSIONS}`
+                    + `?select=*&order=grade.asc,stu_class.asc,stu_num.asc,created_at.asc`;
+                const res = await fetch(url, { headers: SB_HEADERS, cache: 'no-store' });
+                if (!res.ok) throw new Error(await res.text());
+
+                const rows = await res.json();
                 if (!rows.length) { alert("불러온 제출물이 없습니다."); return; }
 
-                // 2차원 배열(첫 행 = 머리글)로 온 경우 객체로 변환
-                if (Array.isArray(rows[0])) {
-                    const head = rows[0];
-                    rows = rows.slice(1).map(r => Object.fromEntries(head.map((h, i) => [h, r[i]])));
-                }
-                setStudents(rows.map(mapRow));
+                setStudents(rows.map(mapRow), rows);
             } catch (e) {
-                alert("❌ 시트에서 직접 불러오지 못했습니다.\n(Apps Script에 doGet 조회 기능이 없거나 권한 문제일 수 있습니다.)\n\n[시트 붙여넣기] 또는 [CSV 열기]를 이용하세요.");
+                console.error(e);
+                alert("❌ 수파베이스에서 불러오지 못했습니다.\n\n(" + e.message + ")\n\nRLS 정책에서 select 권한이 열려 있는지 확인하세요.");
             }
         }
 
@@ -704,7 +709,23 @@
             setStudents(objs.map(mapRow));
         }
 
-        function setStudents(list) {
+        function setStudents(list, rawRows) {
+            // 이미 서버에 저장된 채점 결과가 있으면 그대로 복원 (다른 PC에서 채점한 경우 대비)
+            if (rawRows) {
+                rawRows.forEach(r => {
+                    if (r.total == null) return;
+                    const k = `score_${ASSESS_ID}_${r.grade}_${r.stu_class}_${r.stu_num}`;
+                    localStorage.setItem(k, JSON.stringify({
+                        assessId: ASSESS_ID,
+                        grade: r.grade, stuClass: r.stu_class, stuNum: r.stu_num, stuName: r.stu_name,
+                        scores: { c1: r.score1, c2: r.score2, c3: r.score3 },
+                        total: r.total, level: r.ach_level || '',
+                        feedback: r.feedback || '', grader: r.grader || '',
+                        gradedAt: r.graded_at || ''
+                    }));
+                });
+            }
+
             // 학년-반-번호 순 정렬, 같은 학생이 여러 번 제출했으면 마지막 것만 사용
             const seen = new Map();
             list.forEach(s => seen.set(`${s.grade}-${s.stuClass}-${s.stuNum}`, s));
@@ -814,18 +835,13 @@ ${refs.length ? refs.map((r, n) => `[자료${n + 1}] ${esc(r)}`).join('\n') : '(
             </div>
 
             <div class="answer-block">
-                <h4>4. 그래프의 수학적 특징 <span class="hint">→ [그래프 설명하기] 채점 근거</span></h4>
+                <h4>4. 그래프 설명하기 <span class="hint">→ 두 번째 평가 요소 채점 근거</span></h4>
                 <div class="answer-text">${esc(s.obs1) || '(미작성)'}</div>
             </div>
 
             <div class="answer-block">
-                <h4>5. 실세계 현상 해석 <span class="hint">→ [실생활 해석하기] 채점 근거</span></h4>
+                <h4>5. 실생활 해석하기 <span class="hint">→ 세 번째 평가 요소 채점 근거</span></h4>
                 <div class="answer-text">${esc(s.obs2) || '(미작성)'}</div>
-            </div>
-
-            <div class="answer-block">
-                <h4>6. 수학적 유용성 및 가치 성찰 <span class="hint">→ [실생활 해석하기] 보조 근거</span></h4>
-                <div class="answer-text">${esc(s.obs3) || '(미작성)'}</div>
             </div>
 
             <div class="section-title" style="margin-top:30px;">🖊️ 채점 기준 (수행 수준)</div>`;
@@ -928,14 +944,26 @@ ${refs.length ? refs.map((r, n) => `[자료${n + 1}] ${esc(r)}`).join('\n') : '(
 
             localStorage.setItem(keyOf(s), JSON.stringify(record));
 
-            // 구글 시트에도 전송 (Apps Script에서 action:'score' 처리 필요)
-            if (GOOGLE_SCRIPT_URL) {
+            // 수파베이스의 해당 제출 행에 점수를 기록
+            if (SB_READY && s.id) {
                 try {
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST', mode: 'no-cors',
-                        body: JSON.stringify({ action: 'score', ...record, c1: picked.c1, c2: picked.c2, c3: picked.c3 })
+                    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE_SUBMISSIONS}?id=eq.${s.id}`, {
+                        method: 'PATCH',
+                        headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({
+                            score1: picked.c1, score2: picked.c2, score3: picked.c3,
+                            total: total,
+                            ach_level: record.level,
+                            feedback: record.feedback,
+                            grader: graderName,
+                            graded_at: new Date().toISOString()
+                        })
                     });
-                } catch (e) { /* 로컬 저장은 이미 완료 */ }
+                    if (!res.ok) throw new Error(await res.text());
+                } catch (e) {
+                    console.error(e);
+                    alert("⚠️ 이 PC에는 저장했지만 수파베이스 전송에 실패했습니다.\n\n(" + e.message + ")\n\nRLS 정책에서 update 권한을 확인하세요.");
+                }
             }
 
             renderList();

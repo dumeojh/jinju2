@@ -1,3 +1,33 @@
-// config.js 파일 내용
-const BASE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjUNk425tC1557x-Sh2pAFq3X5gzIGZzA4xXSz3gTZWY1kxdn7vZwnjRvuEbKMvpEu/exec";
+/** ============================================================================
+ *  안성여고 수학 수행평가 시스템 - 공통 설정 파일
+ *  ----------------------------------------------------------------------------
+ *  ⚠️ 아래 3곳의 따옴표 안 내용만 바꿔 주세요.
+ * ============================================================================ */
 
+
+/** [1] 구글 앱스 스크립트 주소
+ *  1학기 페이지(2026-1-01.html, dashboard.html, grading.html)에서 계속 사용합니다.
+ *  기존에 쓰시던 주소를 그대로 넣어 주세요. (2학기 페이지는 사용하지 않습니다)
+ */
+const BASE_SCRIPT_URL = "https://script.google.com/macros/s/여기에_기존_주소_붙여넣기/exec";
+
+
+/** [2] 수파베이스 프로젝트 URL
+ *  수파베이스 → Project Settings → Data API → Project URL
+ *  예: https://abcdefghijklmn.supabase.co
+ */
+const SUPABASE_URL = "https://여기에_프로젝트_주소.supabase.co";
+
+
+/** [3] 수파베이스 anon key (public)
+ *  수파베이스 → Project Settings → API Keys → anon public
+ *  ⚠️ service_role 키는 절대 여기에 넣지 마세요. (브라우저에 그대로 노출됩니다)
+ */
+const SUPABASE_ANON_KEY = "여기에_anon_public_키_붙여넣기";
+
+
+/** ============================================================================
+ *  아래는 수정하지 않아도 됩니다. (수파베이스 테이블 이름)
+ * ============================================================================ */
+const SB_TABLE_SUBMISSIONS = "submissions_2026_2";   // 제출물 + 채점 결과
+const SB_TABLE_LOGS = "exam_logs_2026_2";            // 시험 시작 / 이탈 경고 기록

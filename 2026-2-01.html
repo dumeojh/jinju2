@@ -384,7 +384,22 @@
         };
         examChannel.postMessage('check_open');
 
-        const GOOGLE_SCRIPT_URL = BASE_SCRIPT_URL;
+        /** ---------------- 수파베이스 저장 헬퍼 ---------------- **/
+        const SB_HEADERS = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+        };
+
+        async function sbInsert(table, row) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+                method: 'POST',
+                headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+                body: JSON.stringify(row)
+            });
+            if (!res.ok) throw new Error(await res.text());
+            return true;
+        }
         const grid = document.getElementById('dataInputGrid');
         for (let i = 1; i <= 10; i++) {
             grid.innerHTML += `<div class="data-item">#${i} <input type="number" class="ix" placeholder="x"> <input type="number" class="iy" placeholder="y"></div>`;
@@ -467,17 +482,15 @@
             const clsNum = document.getElementById('classSelect').value;
             const num = document.getElementById('stuNum').value;
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: 'warning',
-                    grade: grade,
-                    stuClass: clsNum,
-                    stuNum: num,
-                    message: msg
-                })
-            });
+            // 경고 기록은 실패해도 시험 진행을 막지 않습니다.
+            sbInsert(SB_TABLE_LOGS, {
+                grade: Number(grade) || null,
+                stu_class: Number(clsNum) || null,
+                stu_num: Number(num) || null,
+                stu_name: document.getElementById('stuName').value,
+                event: 'warning',
+                message: msg
+            }).catch(e => console.warn('경고 기록 실패', e));
         }
         let examTime = 45 * 60;
         let timerInterval;
@@ -543,17 +556,14 @@
 
             isExamStarted = true;
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: 'start',
-                    grade: grade,
-                    stuClass: clsNum,
-                    stuNum: num,
-                    stuName: name
-                })
-            });
+            sbInsert(SB_TABLE_LOGS, {
+                grade: Number(grade),
+                stu_class: Number(clsNum),
+                stu_num: Number(num),
+                stu_name: name,
+                event: 'start',
+                message: '시험 시작'
+            }).catch(e => console.warn('시작 기록 실패', e));
 
             startTimer();
         }
@@ -714,32 +724,27 @@
 
             const refs = document.querySelectorAll('.ref');
 
-            const payload = {
-                action: 'submit',  // 👈 이 줄을 반드시 추가해 주세요! (구글 서버에게 최종 제출임을 알림)
-                grade: grade,
-                stuClass: clsNum,
-                stuNum: num,
-                stuName: document.getElementById('stuName').value,
-                funcArea: document.getElementById('funcArea').value,
-                articleTitle: document.getElementById('articleTitle').value,
+            const row = {
+                grade: Number(grade),
+                stu_class: Number(clsNum),
+                stu_num: Number(num),
+                stu_name: document.getElementById('stuName').value,
+                func_area: document.getElementById('funcArea').value,
+                article_title: document.getElementById('articleTitle').value,
                 ref1: refs[0].value,
                 ref2: refs[1].value,
                 ref3: refs[2].value,
                 reason: document.getElementById('reason').value,
-                dataPoints: ptsArr.join(', '),
+                data_points: ptsArr.join(', '),
                 formula: polyCoeffs.length ? `f(x) = ${polyPlainText(polyCoeffs, polyOrder)}` : '',
                 obs1: document.getElementById('obs1').value,
                 obs2: document.getElementById('obs2').value,
-                obs3: '',
-                submitType: type
+                submit_type: type,
+                warn_count: warningCount
             };
 
             try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(payload)
-                });
+                await sbInsert(SB_TABLE_SUBMISSIONS, row);   // 실패하면 예외가 발생합니다.
 
                 localStorage.setItem(studentKey, 'true');
 
@@ -751,7 +756,8 @@
                 document.getElementById('timerDisplay').innerText = "✅ 제출 완료";
 
             } catch (e) {
-                alert("❌ 오류가 발생했습니다. 화면을 캡처한 후 선생님께 문의하세요.");
+                console.error(e);
+                alert("❌ 저장에 실패했습니다. 화면을 캡처한 후 선생님께 문의하세요.\n\n(" + e.message + ")");
                 btn.disabled = false; btn.innerText = "다시 제출";
                 isExamStarted = true;
             }
