@@ -145,6 +145,20 @@
     </div>
 
     <script>
+        /** ============================================================
+         *  [임시 설정] 비밀번호 잠금 사용 여부
+         *  false = 비밀번호 없이 바로 메뉴 표시 (현재 상태)
+         *  true  = 비밀번호 잠금 다시 사용
+         *  ============================================================ */
+        const USE_PASSWORD = false;
+
+        window.addEventListener('DOMContentLoaded', function () {
+            if (!USE_PASSWORD) {
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'block';
+            }
+        });
+
         // 비밀번호 체크 로직
         function checkPassword() {
             const pwd = document.getElementById('adminPwd').value;
