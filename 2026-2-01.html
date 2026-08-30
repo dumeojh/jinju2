@@ -282,20 +282,25 @@
                         <input type="text" id="stuName" placeholder="이름">
                     </div>
                 </div>
-                <div class="auth-row">
-                    <label>분석 영역</label>
-                    <select id="funcArea">
-                        <option value="">-- 영역 선택 --</option>
-                        <option value="지수함수">지수함수 영역</option>
-                        <option value="로그함수">로그함수 영역</option>
-                        <option value="삼각함수">삼각함수 영역</option>
-                    </select>
-                </div>
                 <button class="btn btn-start" onclick="startExam()">확인 (시험 시작)</button>
             </div>
         </div>
 
         <div id="mainContent">
+            <div class="section">
+                <div class="section-title">1. 분석 영역 선택</div>
+                <div class="guide-box">
+                    자신이 조사할 자료의 변화 패턴에 맞는 함수 영역을 선택하세요.<br>
+                    <b>선택한 영역에 따라 추세선의 종류와 산출되는 함수식이 달라집니다.</b>
+                </div>
+                <select id="funcArea" onchange="updateArea()">
+                    <option value="">-- 영역 선택 --</option>
+                    <option value="지수함수">지수함수 영역</option>
+                    <option value="로그함수">로그함수 영역</option>
+                    <option value="삼각함수">삼각함수 영역</option>
+                </select>
+            </div>
+
             <div class="section">
                 <div class="section-title">2. 기사 제목 및 참고자료</div>
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
@@ -524,9 +529,8 @@
             const clsNum = document.getElementById('classSelect').value;
             const num = document.getElementById('stuNum').value;
             const name = document.getElementById('stuName').value;
-            const area = document.getElementById('funcArea').value;
 
-            if (!grade || !clsNum || !num || !name || !area) { alert("항목을 모두 입력하세요."); return; }
+            if (!grade || !clsNum || !num || !name) { alert("항목을 모두 입력하세요."); return; }
 
             const studentKey = `submitted_${MASTER_EXAM_CODE}_${grade}_${clsNum}_${num}`;
 
@@ -538,7 +542,8 @@
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             document.getElementById('stickyHeader').style.display = 'block';
-            document.getElementById('displayInfo').innerText = `${grade}학년 ${clsNum}반 ${num}번 ${name} (영역: ${area})`;
+            studentInfoText = `${grade}학년 ${clsNum}반 ${num}번 ${name}`;
+            updateArea();
 
             isExamStarted = true;
 
@@ -558,9 +563,24 @@
         }
 
         let chartInstance = null;
+        let studentInfoText = "";
+
+        /** 본문에서 분석 영역을 고르면 상단 안내 문구를 갱신 **/
+        function updateArea() {
+            const area = document.getElementById('funcArea').value;
+            document.getElementById('displayInfo').innerText =
+                studentInfoText + (area ? ` (영역: ${area})` : " (영역 미선택)");
+        }
 
         function runAnalysis() {
             const area = document.getElementById('funcArea').value;
+
+            if (!area) {
+                alert("먼저 1번 항목에서 분석 영역을 선택하세요.");
+                document.getElementById('funcArea').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
             let pts = [];
             const xs = document.querySelectorAll('.ix'), ys = document.querySelectorAll('.iy');
             for (let i = 0; i < 10; i++) if (xs[i].value && ys[i].value) pts.push([parseFloat(xs[i].value), parseFloat(ys[i].value)]);
