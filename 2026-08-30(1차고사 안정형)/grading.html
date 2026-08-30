@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>안성여고 수학 수행평가 채점 시스템</title>
+    <script>
+        window.MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --success: #27ae60;
+            --purple: #8e44ad;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.5em;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"],
+        textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn-purple {
+            background: var(--purple);
+        }
+
+        .btn-purple:hover {
+            background: #732d91;
+        }
+
+        .btn-save {
+            background: var(--success);
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            margin-top: 15px;
+        }
+
+        .btn-save:hover {
+            background: #219150;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .student-list-panel {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .student-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-item:hover {
+            background: #f1f4f8;
+        }
+
+        .student-item.active {
+            background: #e8f4fd;
+            border-left: 5px solid var(--accent);
+            font-weight: bold;
+        }
+
+        .status-badge {
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #eee;
+            color: #555;
+        }
+
+        .status-badge.graded {
+            background: #e9f7ef;
+            color: var(--success);
+        }
+
+        .grading-panel,
+        .all-classes-panel,
+        .batch-grading-panel {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .status-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+            text-align: center;
+        }
+
+        .status-table th,
+        .status-table td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            font-size: 0.9em;
+        }
+
+        .status-table th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        .status-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .status-table tr:hover {
+            background-color: #f1f4f8;
+        }
+
+        .status-table .class-divider {
+            border-right: 2px solid #2c3e50;
+        }
+
+        .empty-state {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            color: #7f8c8d;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .custom-accordion {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+        }
+
+        .custom-accordion summary {
+            padding: 15px 20px;
+            font-size: 1.15em;
+            font-weight: bold;
+            background: #f8f9fa;
+            color: var(--primary);
+            cursor: pointer;
+            list-style: none;
+            position: relative;
+            border-bottom: 1px solid transparent;
+            transition: background 0.2s;
+        }
+
+        .custom-accordion summary:hover {
+            background: #eef2f7;
+        }
+
+        .custom-accordion summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .custom-accordion summary::after {
+            content: '▼';
+            position: absolute;
+            right: 20px;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .custom-accordion[open] summary {
+            border-bottom: 1px solid #ddd;
+        }
+
+        .custom-accordion[open] summary::after {
+            content: '▲';
+        }
+
+        .accordion-content {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.15em;
+            font-weight: bold;
+            color: var(--accent);
+            margin: 0 0 10px 0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .answer-box {
+            background: #fdfdfd;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #bdc3c7;
+            margin-bottom: 25px;
+            white-space: normal;
+            word-break: keep-all;
+            line-height: 1.6;
+        }
+
+        .grading-inputs {
+            background: #fff9e6;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #f1c40f;
+        }
+
+        .grading-split {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .grading-left {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .grading-right {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 950px) {
+            .grading-right {
+                border-left: 2px dashed #f1c40f;
+                padding-left: 30px;
+            }
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .score-row label {
+            font-weight: bold;
+            color: var(--primary);
+            flex: 1;
+            padding-right: 15px;
+            line-height: 1.3;
+        }
+
+        .score-row input {
+            width: 80px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 850px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .student-list-panel,
+            .grading-panel,
+            .all-classes-panel,
+            .batch-grading-panel,
+            .empty-state {
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+
+
+        /* 인쇄 모달 배경 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .print-modal {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 350px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .print-modal h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .print-option-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 15px;
+            background: #f1f4f8;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05em;
+            transition: 0.2s;
+        }
+
+        .print-option-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        .close-modal-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* 📝 반별 일괄 채점 전용 스타일 */
+        .batch-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            min-width: 800px;
+        }
+
+        .batch-table th,
+        .batch-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .batch-table th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        .batch-table input[type="number"] {
+            width: 50px;
+            text-align: center;
+            padding: 6px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .batch-table input[type="text"] {
+            width: 95%;
+            padding: 6px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-row-save {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-row-save:hover {
+            background: #2980b9;
+        }
+
+        .btn-row-save.saved {
+            background: var(--success);
+        }
+
+
+        /* 🖨️ 인쇄 전용 스타일 */
+        @media print {
+            @page {
+                margin: 8mm;
+            }
+
+            body>*:not(#printArea) {
+                display: none !important;
+            }
+
+            #printArea {
+                display: block !important;
+                position: relative;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 8.5pt;
+                margin-top: 10px;
+            }
+
+            .print-table th,
+            .print-table td {
+                border: 1px solid #000;
+                padding: 4px 2px;
+                line-height: 1.1;
+            }
+
+            .print-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: bold;
+            }
+
+            .print-title {
+                text-align: center;
+                font-size: 14pt;
+                font-weight: bold;
+                margin-bottom: 10px;
+                color: #000;
+            }
+
+            .status-table {
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                font-size: 7.5pt;
+                margin-top: 10px;
+            }
+
+            .status-table th,
+            .status-table td {
+                border: 1px solid #000 !important;
+                padding: 3px 1px;
+                line-height: 1.0;
+            }
+
+            .status-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: bold;
+            }
+
+            .status-table .class-divider {
+                border-right: 2px solid #000 !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>✅ 함수 기사문 채점 시스템</h1>
+        <div class="filter-group">
+            <select id="filterGrade">
+                <option value="">-- 학년 --</option>
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+            </select>
+
+            <select id="filterClass">
+                <option value="">-- 반 --</option>
+                <option value="1">1반</option>
+                <option value="2">2반</option>
+                <option value="3">3반</option>
+                <option value="4">4반</option>
+                <option value="5">5반</option>
+                <option value="6">6반</option>
+            </select>
+            <button class="btn" onclick="loadSubmissions()">데이터 불러오기</button>
+
+            <!-- 🌟 새롭게 추가된 반별 일괄 채점 버튼 -->
+            <button class="btn btn-save" style="margin: 0; padding: 10px 15px; width: auto;"
+                onclick="openBatchGrading()">📝 일괄 채점</button>
+
+            <button class="btn btn-purple" onclick="loadAllClassesStatus()">전체반 채점확인</button>
+
+            <button class="btn" style="background-color:#7f8c8d;" onclick="openPrintModal()">🖨️ 출력 센터</button>
+        </div>
+    </div>
+
+
+    <div class="main-container">
+        <div class="student-list-panel" id="studentListPanel">
+            <div style="text-align:center; color:#999; padding:20px;">학년과 반을 선택하고<br>불러오기를 눌러주세요.</div>
+        </div>
+
+        <div class="empty-state" id="emptyState">👈 왼쪽 명단에서 학생을 선택하시거나<br>상단의 <strong>[일괄 채점]</strong> 버튼을 눌러주세요.</div>
+
+
+
+        <div class="all-classes-panel" id="allClassesPanel">
+            <h2 id="allClassesTitle" style="margin-top:0; color:var(--primary);">전체반 채점 확인</h2>
+            <div class="status-table-wrapper" id="allClassesTableContainer">
+            </div>
+        </div>
+
+        <div class="batch-grading-panel" id="batchGradingPanel">
+            <h2 id="batchClassTitle" style="margin-top:0; margin-bottom: 20px; color:var(--primary);">반별 일괄 채점</h2>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;">
+                <div style="color: #d35400; font-size: 0.9em;">
+                    💡 <strong>Tip:</strong> 키보드 <code>Tab</code> 키를 이용해 다음 칸으로 빠르게 이동할 수 있습니다.<br>
+                    입력을 모두 마친 후 우측의 <strong>[전체 저장]</strong> 버튼을 누르면 변경된 내용만 모아서 한 번에 저장됩니다.
+                </div>
+                <button class="btn btn-save" style="margin: 0; padding: 10px 20px; width: auto; font-size: 1.05em;"
+                    id="btnSaveAll" onclick="saveAllBatchChanges()">💾 변경사항 전체 저장</button>
+            </div>
+            <div class="status-table-wrapper" id="batchTableContainer">
+            </div>
+        </div>
+
+        <div class="grading-panel" id="gradingPanel">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 20px;">
+                <h2 id="dispStudentInfo" style="margin:0; color:var(--primary);">학생 정보</h2>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span id="dispFuncArea"
+                        style="background:var(--primary); color:white; padding:5px 10px; border-radius:5px; font-size:0.9em;">영역</span>
+                    <button class="btn" style="background-color: #8e44ad; padding: 5px 15px; font-size: 0.9em;"
+                        onclick="copyAIPrompt()">🤖 생기부 프롬프트 복사</button>
+                </div>
+            </div>
+
+
+            <details class="custom-accordion" open>
+                <summary>📝 학생 제출 답안 확인</summary>
+                <div class="accordion-content">
+                    <div class="section-title">기사 제목 및 참고자료</div>
+                    <div class="answer-box">
+                        <div style="margin-bottom: 12px; font-size: 1.1em;"><strong id="dispTitle">제목 들어갈 자리</strong>
+                        </div>
+                        <div style="color: #7f8c8d; font-size: 0.9em; margin-bottom: 5px;">[참고자료]</div>
+                        <div style="margin-bottom: 3px;">1. <span id="dispRef1"></span></div>
+                        <div style="margin-bottom: 3px;">2. <span id="dispRef2"></span></div>
+                        <div>3. <span id="dispRef3"></span></div>
+                    </div>
+
+                    <div class="section-title">주제 선정 이유 및 설명</div>
+                    <div class="answer-box" id="dispReason"></div>
+
+                    <div class="section-title">실생활 데이터 및 산출된 함수식</div>
+                    <div class="answer-box">
+                        <strong>데이터:</strong> <span id="dispDataPoints"></span><br><br>
+                        <strong>함수식:</strong>
+                        <div id="dispFormula"
+                            style="font-family: 'Times New Roman', serif; font-style: italic; font-size: 1.3em; letter-spacing: 1px; text-align: center; padding: 15px; background: #fff; border: 1px solid #ddd; margin-top: 10px; border-radius: 5px;">
+                        </div>
+                    </div>
+
+                    <div class="section-title" style="border-bottom:none;">관찰 및 데이터 해석</div>
+                    <div class="answer-box" style="margin-bottom: 0;">
+                        <div style="margin-bottom: 18px;">
+                            <strong style="color: var(--primary);">(1) 그래프의 수학적 특징</strong>
+                            <div id="dispObs1" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                        <div style="margin-bottom: 18px;">
+                            <strong style="color: var(--primary);">(2) 실세계 현상 해석</strong>
+                            <div id="dispObs2" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                        <div>
+                            <strong style="color: var(--primary);">(3) 수학적 유용성 및 가치 성찰</strong>
+                            <div id="dispObs3" style="margin-top: 5px; color: #444;"></div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="custom-accordion" open>
+                <summary>✅ 평가 결과 입력</summary>
+                <div class="accordion-content">
+                    <div class="grading-inputs">
+                        <div class="grading-split">
+                            <div class="grading-left">
+                                <h3 style="margin-top:0; margin-bottom:20px; color:#d35400;">📝 세부 평가 항목</h3>
+
+
+                                <div class="score-row">
+                                    <label>실세계 현상 조사 및<br>재구성하기 (5점)</label>
+                                    <input type="number" id="score1" min="0" max="5" oninput="calculateTotal()"
+                                        onfocus="this.select()">
+                                </div>
+                                <div class="score-row">
+                                    <label>함수 개념을 통해<br>현상 분석하기 (10점)</label>
+                                    <input type="number" id="score2" min="0" max="10" oninput="calculateTotal()"
+                                        onfocus="this.select()">
+                                </div>
+                                <div class="score-row">
+                                    <label>대수 개념의 유용성<br>가치 제시하기 (5점)</label>
+                                    <input type="number" id="score3" min="0" max="5" oninput="calculateTotal()"
+                                        onfocus="this.select()">
+                                </div>
+
+
+                            </div>
+
+                            <div class="grading-right">
+                                <div class="score-row"
+                                    style="border-bottom: 2px solid #f1c40f; padding-bottom: 15px; margin-bottom: 20px;">
+                                    <label style="font-size: 1.2em; color: #d35400;"><strong>총점 (20점
+                                            만점)</strong></label>
+                                    <input type="number" id="totalScore" readonly
+                                        style="background:#fff; border: 2px solid #d35400; font-size: 1.3em; color: #d35400; width: 90px;">
+                                </div>
+                                <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                                    <label style="font-weight:bold; color:var(--primary); margin-bottom:8px;">채점
+                                        특이사항</label>
+                                    <textarea id="teacherFeedback"
+                                        style="flex-grow: 1; min-height: 80px; margin-bottom: 15px; width: 100%; box-sizing: border-box; resize: none; font-size: 0.95em;"
+                                        placeholder="학생에게 남길 피드백을 작성하세요"></textarea>
+                                </div>
+                                <button class="btn btn-save" style="margin-top: 0; padding: 15px;"
+                                    onclick="saveGrade()">채점 결과 저장</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <details class="custom-accordion">
+                <summary>🛠️ [제출데이터] 시트 원본</summary>
+                <div class="accordion-content" id="debugSubmissionArea"></div>
+            </details>
+
+            <details class="custom-accordion">
+                <summary>📊 [실시간현황] 시트 원본</summary>
+                <div class="accordion-content" id="debugStatusArea"></div>
+            </details>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const FETCH_URL = BASE_SCRIPT_URL;
+
+        let currentSubmissions = [];
+        let currentStatuses = [];
+        let selectedStudent = null;
+
+        function getFuzzy(obj, possibleKeys) {
+            for (let key of possibleKeys) { if (obj[key] !== undefined && obj[key] !== "") return obj[key]; }
+            for (let key of possibleKeys) {
+                const cleanTarget = String(key).replace(/\s+/g, '');
+                for (let actualKey in obj) {
+                    if (cleanTarget === String(actualKey).replace(/\s+/g, '')) {
+                        if (obj[actualKey] !== undefined && obj[actualKey] !== "") return obj[actualKey];
+                    }
+                }
+            }
+            return null;
+        }
+
+        // 🌟 switchPanel 기능 업데이트 (새 패널 추가)
+        function switchPanel(panelId) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('gradingPanel').style.display = 'none';
+            document.getElementById('allClassesPanel').style.display = 'none';
+            document.getElementById('batchGradingPanel').style.display = 'none';
+            document.getElementById(panelId).style.display = 'block';
+        }
+
+        async function loadSubmissions() {
+            const grade = document.getElementById('filterGrade').value;
+            const cls = document.getElementById('filterClass').value;
+            const listPanel = document.getElementById('studentListPanel');
+
+            if (!grade || !cls) { alert("학년과 반을 선택해주세요."); return; }
+            listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
+
+            try {
+                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                const res = await fetch(urlWithTime, { cache: 'no-store' });
+                const allData = await res.json();
+
+                if (Array.isArray(allData)) {
+                    alert("🚨 [오류] 구글 서버가 아직 옛날 코드로 응답하고 있습니다!\n\n구글 앱스 스크립트 화면에서 우측 상단 [배포] -> [배포 관리] -> [수정(연필)] -> [새 버전]으로 배포를 꼭 완료해 주세요!");
+                    return;
+                }
+
+                const subData = allData.submissions || [];
+                const statData = allData.status || [];
+
+                currentSubmissions = subData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+                currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+
+                renderStudentList();
+                switchPanel('emptyState');
+            } catch (error) {
+                listPanel.innerHTML = `<div style="text-align:center; padding:20px; color:red;">데이터 로드 실패: ${error.message}</div>`;
+            }
+        }
+
+
+        // 🌟 [추가 기능] 반별 일괄 채점 모드 진입
+        function openBatchGrading() {
+            if (currentSubmissions.length === 0) {
+                alert("먼저 학년과 반을 선택하고 [데이터 불러오기]를 진행해주세요.");
+                return;
+            }
+
+            const grade = document.getElementById('filterGrade').value;
+            const cls = document.getElementById('filterClass').value;
+            document.getElementById('batchClassTitle').innerText = `${grade}학년 ${cls}반 일괄 채점 (키보드 Tab으로 이동)`;
+
+            // 연번 순으로 정렬
+            const sortedData = [...currentSubmissions].sort((a, b) => (parseInt(a['번호']) || 0) - (parseInt(b['번호']) || 0));
+
+            let html = `
+                <table class="batch-table">
+                    <thead>
+                        <tr>
+                            <th width="8%">연번</th>
+                            <th width="12%">이름</th>
+                            <th width="12%">조사/재구성<br>(5점)</th>
+                            <th width="12%">현상 분석<br>(10점)</th>
+                            <th width="12%">가치 제시<br>(5점)</th>
+                            <th width="12%">총점<br>(20점)</th>
+                            <th width="20%">피드백 특이사항</th>
+                            <th width="12%">저장</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedData.forEach((s) => {
+                const index = currentSubmissions.indexOf(s); // 원본 배열에서의 인덱스
+                const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
+                const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
+
+                html += `
+                    <tr>
+                        <td><strong>${s['번호']}</strong></td>
+                        <td>${s['이름']}</td>
+<td><input type="number" id="b_sc1_${index}" min="0" max="5" value="${sc1}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc2_${index}" min="0" max="10" value="${sc2}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>
+<td><input type="number" id="b_sc3_${index}" min="0" max="5" value="${sc3}" oninput="calcBatchTotal(${index})" onblur="calcBatchTotal(${index})" onfocus="this.select()"></td>                  
+                        <td><input type="number" id="b_tot_${index}" value="${total}" readonly style="background:#f4f6f7; border-color:#d35400; color:#d35400; font-weight:bold;"></td>
+                        <td><input type="text" id="b_fb_${index}" value="${feedback}" placeholder="특이사항 작성"></td>
+                        <td><button class="btn-row-save" id="b_btn_${index}" onclick="saveBatchRow(${index})">저장</button></td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            document.getElementById('batchTableContainer').innerHTML = html;
+
+            // 패널 전환
+            switchPanel('batchGradingPanel');
+
+            // 사이드바 포커스 제거
+            document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // 🌟 [추가 기능] 일괄 채점 모드 총점 계산
+        function calcBatchTotal(index) {
+            let s1 = parseInt(document.getElementById(`b_sc1_${index}`).value) || 0;
+            let s2 = parseInt(document.getElementById(`b_sc2_${index}`).value) || 0;
+            let s3 = parseInt(document.getElementById(`b_sc3_${index}`).value) || 0;
+
+            // 점수 초과 방지 로직
+            if (s1 > 5) { s1 = 5; document.getElementById(`b_sc1_${index}`).value = 5; }
+            if (s2 > 10) { s2 = 10; document.getElementById(`b_sc2_${index}`).value = 10; }
+            if (s3 > 5) { s3 = 5; document.getElementById(`b_sc3_${index}`).value = 5; }
+
+            document.getElementById(`b_tot_${index}`).value = s1 + s2 + s3;
+        }
+
+        // 🌟 [추가 기능] 일괄 채점 모드 한 줄(학생 1명) 저장 통신
+        async function saveBatchRow(index) {
+            const student = currentSubmissions[index];
+            const btn = document.getElementById(`b_btn_${index}`);
+
+            btn.innerText = "저장중..";
+            btn.disabled = true;
+
+            const payload = {
+                action: 'grade',
+                grade: student['학년'],
+                stuClass: student['반'],
+                stuNum: student['번호'],
+                score1: document.getElementById(`b_sc1_${index}`).value,
+                score2: document.getElementById(`b_sc2_${index}`).value,
+                score3: document.getElementById(`b_sc3_${index}`).value,
+                totalScore: document.getElementById(`b_tot_${index}`).value,
+                feedback: document.getElementById(`b_fb_${index}`).value
+            };
+
+            try {
+                const response = await fetch(BASE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("서버 응답 오류: 저장이 완료되지 않았습니다.");
+                }
+
+                // 성공 시 로컬 데이터 갱신
+                student['score1'] = payload.score1;
+                student['score2'] = payload.score2;
+                student['score3'] = payload.score3;
+                student['총점'] = payload.totalScore;
+                student['feedback'] = payload.feedback;
+
+                // 좌측 명단 뱃지 갱신
+                renderStudentList();
+
+                // 저장 완료 시각적 피드백
+                btn.innerText = "저장완료";
+                btn.classList.add('saved');
+            } catch (error) {
+                alert("❌ 저장 중 오류가 발생했습니다.");
+                btn.innerText = "저장 실패";
+            } finally {
+                btn.disabled = false;
+                // 1.5초 후 버튼 상태 원래대로 복구
+                setTimeout(() => {
+                    if (btn.classList.contains('saved')) {
+                        btn.innerText = "저장";
+                        btn.classList.remove('saved');
+                    }
+                }, 1500);
+            }
+        }
+
+
+        // 🌟 [추가 기능] 일괄 채점 모드 전체 저장 (변경된 항목만 스마트하게 저장)
+        async function saveAllBatchChanges() {
+            const btnAll = document.getElementById('btnSaveAll');
+            btnAll.innerText = "⏳ 전체 저장 진행 중...";
+            btnAll.disabled = true;
+
+            let successCount = 0;
+            let errorCount = 0;
+            let noChangeCount = 0;
+
+            const sortedData = [...currentSubmissions].sort((a, b) => (parseInt(a['번호']) || 0) - (parseInt(b['번호']) || 0));
+
+            // 구글 시트 과부하(Lock 오류)를 막기 위해 순차적(Sequential)으로 저장합니다.
+            for (let i = 0; i < sortedData.length; i++) {
+                const s = sortedData[i];
+                const index = currentSubmissions.indexOf(s);
+
+                const sc1Input = document.getElementById(`b_sc1_${index}`);
+                if (!sc1Input) continue;
+
+                const sc1Val = sc1Input.value;
+                const sc2Val = document.getElementById(`b_sc2_${index}`).value;
+                const sc3Val = document.getElementById(`b_sc3_${index}`).value;
+                const totVal = document.getElementById(`b_tot_${index}`).value;
+                const fbVal = document.getElementById(`b_fb_${index}`).value;
+
+                // 기존 데이터(원본)와 비교를 위한 값 가져오기
+                const origSc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const origSc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const origSc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const origTot = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
+                const origFb = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
+
+                // 변경된 항목이 하나라도 있는지 확인
+                if (String(sc1Val) !== String(origSc1) ||
+                    String(sc2Val) !== String(origSc2) ||
+                    String(sc3Val) !== String(origSc3) ||
+                    String(fbVal) !== String(origFb) ||
+                    (!origTot && totVal)) {
+
+                    const rowBtn = document.getElementById(`b_btn_${index}`);
+                    rowBtn.innerText = "저장중..";
+                    rowBtn.disabled = true;
+
+                    const payload = {
+                        action: 'grade',
+                        grade: s['학년'],
+                        stuClass: s['반'],
+                        stuNum: s['번호'],
+                        score1: sc1Val,
+                        score2: sc2Val,
+                        score3: sc3Val,
+                        totalScore: totVal,
+                        feedback: fbVal
+                    };
+
+                    try {
+                        const response = await fetch(BASE_SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error("서버 에러");
+
+                        // 로컬 데이터 갱신
+                        s['score1'] = sc1Val;
+                        s['score2'] = sc2Val;
+                        s['score3'] = sc3Val;
+                        s['총점'] = totVal;
+                        s['feedback'] = fbVal;
+
+                        rowBtn.innerText = "저장완료";
+                        rowBtn.classList.add('saved');
+                        successCount++;
+                    } catch (error) {
+                        rowBtn.innerText = "저장 실패";
+                        rowBtn.classList.remove('saved');
+                        errorCount++;
+                    } finally {
+                        setTimeout(() => {
+                            if (rowBtn.classList.contains('saved')) {
+                                rowBtn.innerText = "저장";
+                                rowBtn.classList.remove('saved');
+                            }
+                            rowBtn.disabled = false;
+                        }, 1500);
+                    }
+                } else {
+                    noChangeCount++;
+                }
+            }
+
+            renderStudentList(); // 왼쪽 명단의 채점 뱃지 상태 갱신
+
+            // 최종 결과 알림
+            if (errorCount === 0 && successCount > 0) {
+                alert(`✅ 총 ${successCount}명의 변경된 점수가 모두 성공적으로 저장되었습니다!`);
+            } else if (errorCount > 0) {
+                alert(`⚠️ ${successCount}명 저장 성공, ${errorCount}명 저장 실패.\n실패한 줄의 '저장 실패' 버튼을 확인해주세요.`);
+            } else if (noChangeCount > 0 && successCount === 0) {
+                alert(`💡 수정된 점수가 없습니다.\n(이미 모두 저장되어 있거나 변경사항이 없습니다.)`);
+            }
+
+            btnAll.innerText = "💾 변경사항 전체 저장";
+            btnAll.disabled = false;
+        }
+
+        async function loadAllClassesStatus() {
+            const grade = document.getElementById('filterGrade').value;
+            if (!grade) {
+                alert("확인하실 '학년'을 먼저 선택해주세요.");
+                return;
+            }
+
+            switchPanel('allClassesPanel');
+            const tableContainer = document.getElementById('allClassesTableContainer');
+            document.getElementById('allClassesTitle').innerText = `${grade}학년 전체반 채점 확인 (1~6반)`;
+            tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
+
+            try {
+                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                const res = await fetch(urlWithTime, { cache: 'no-store' });
+                const allData = await res.json();
+                const subData = allData.submissions || [];
+
+                const targetClasses = ['1', '2', '3', '4', '5', '6'];
+                const classData = {};
+                let maxStudentNum = 0;
+
+                targetClasses.forEach(c => {
+                    classData[c] = subData.filter(row => String(row['학년']) === grade && String(row['반']) === c);
+                    classData[c].forEach(student => {
+                        const num = parseInt(student['번호']) || 0;
+                        if (num > maxStudentNum) maxStudentNum = num;
+                    });
+                });
+
+                if (maxStudentNum > 40) maxStudentNum = 40;
+
+                if (maxStudentNum === 0) {
+                    tableContainer.innerHTML = '<div style="text-align:center; padding:50px; color:#7f8c8d;">해당 학년의 데이터가 없습니다.</div>';
+                    return;
+                }
+
+                let html = `<table class="status-table">`;
+                html += `<thead><tr><th rowspan="2" class="class-divider">연번</th>`;
+
+                targetClasses.forEach(c => {
+                    html += `<th colspan="3" class="class-divider">${c}반</th>`;
+                });
+
+                html += `</tr><tr>`;
+                targetClasses.forEach(c => {
+                    html += `<th>학번</th><th>이름</th><th class="class-divider">총점</th>`;
+                });
+                html += `</tr></thead><tbody>`;
+
+                for (let i = 1; i <= maxStudentNum; i++) {
+                    html += `<tr><td class="class-divider"><strong>${i}</strong></td>`;
+
+                    targetClasses.forEach(c => {
+                        const student = classData[c].find(s => parseInt(s['번호']) === i);
+
+                        if (student) {
+                            let hakbun = getFuzzy(student, ['학번']);
+                            if (!hakbun) {
+                                hakbun = `${grade}${c.padStart(2, '0')}${String(i).padStart(2, '0')}`;
+                            }
+                            const name = student['이름'] || '';
+                            const score = student['총점'] || getFuzzy(student, ['총점', '총점(20점)', 'totalScore']) || '';
+
+                            html += `<td>${hakbun}</td><td>${name}</td><td class="class-divider"><strong>${score}</strong></td>`;
+                        } else {
+                            html += `<td></td><td></td><td class="class-divider"></td>`;
+                        }
+                    });
+                    html += `</tr>`;
+                }
+                html += `</tbody></table>`;
+                tableContainer.innerHTML = html;
+
+            } catch (error) {
+                tableContainer.innerHTML = `<div style="text-align:center; padding:50px; color:red;">데이터 로드 실패: ${error.message}</div>`;
+            }
+        }
+
+        function renderStudentList() {
+            const listPanel = document.getElementById('studentListPanel');
+            listPanel.innerHTML = '';
+
+            if (currentSubmissions.length === 0) {
+                listPanel.innerHTML = '<div style="text-align:center; padding:20px; color:#7f8c8d;">제출된 답안이 없습니다.</div>';
+                return;
+            }
+
+            listPanel.innerHTML = `
+                <div style="padding: 10px; border-bottom: 2px solid #ddd; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleAllCheckboxes(this)" style="transform: scale(1.2); cursor: pointer;">
+                    <label for="selectAllCheckbox" style="font-weight: bold; cursor: pointer; color: var(--primary);">전체 선택 / 해제</label>
+                </div>
+            `;
+
+            currentSubmissions.sort((a, b) => (parseInt(a['번호']) || 0) - (parseInt(b['번호']) || 0));
+            currentSubmissions.forEach((student, index) => {
+                const item = document.createElement('div');
+                item.className = 'student-item';
+                item.id = `student-item-${index}`;
+                const badge = student['총점'] ? `<span class="status-badge graded">채점완료</span>` : `<span class="status-badge">미채점</span>`;
+
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="checkbox" class="student-checkbox" value="${index}" onclick="event.stopPropagation()" style="transform: scale(1.3); cursor: pointer;">
+                        <div><strong>${student['번호']}번</strong> ${student['이름']}</div>
+                    </div>
+                    ${badge}
+                `;
+                item.onclick = () => showStudentDetail(index);
+                listPanel.appendChild(item);
+            });
+        }
+
+        function toggleAllCheckboxes(source) {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+        }
+
+        function showStudentDetail(index) {
+            document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`student-item-${index}`).classList.add('active');
+
+            selectedStudent = currentSubmissions[index];
+            const s = selectedStudent;
+
+            switchPanel('gradingPanel');
+
+            document.getElementById('dispStudentInfo').innerText = `${s['학년']}학년 ${s['반']}반 ${s['번호']}번 ${s['이름']}`;
+            document.getElementById('dispFuncArea').innerText = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '-';
+
+            document.getElementById('dispTitle').innerText = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            document.getElementById('dispRef1').innerText = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
+            document.getElementById('dispRef2').innerText = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
+            document.getElementById('dispRef3').innerText = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
+
+            document.getElementById('dispReason').innerText = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            document.getElementById('dispDataPoints').innerText = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
+
+            document.getElementById('dispObs1').innerText = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+            document.getElementById('dispObs2').innerText = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+            document.getElementById('dispObs3').innerText = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+            const formulaDiv = document.getElementById('dispFormula');
+            let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+            let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+            formulaDiv.innerHTML = cleanFormula;
+
+
+            if (window.MathJax) {
+                if (MathJax.typesetClear) {
+                    MathJax.typesetClear([formulaDiv]); // 이전 렌더링 캐시 초기화
+                }
+                MathJax.typesetPromise([formulaDiv]);
+            }
+
+            document.getElementById('score1').value = getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기', '채점_특징(20점)', 'score1']) || '';
+            document.getElementById('score2').value = getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기', '채점_해석(20점)', 'score2']) || '';
+            document.getElementById('score3').value = getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기', '채점_성찰(10점)', 'score3']) || '';
+            document.getElementById('teacherFeedback').value = getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '';
+
+            calculateTotal();
+
+            let debugSubHtml = `<div style="background:#eef2f7; padding:15px; border-radius:8px; border-left: 4px solid #3498db; color: #333; font-size: 0.95em; word-break: break-all;">`;
+            for (let key in s) {
+                let val = s[key] || "비어있음";
+                debugSubHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
+            }
+            debugSubHtml += `</div>`;
+            document.getElementById('debugSubmissionArea').innerHTML = debugSubHtml;
+
+            const stuNum = s['번호'];
+            const statusRecord = currentStatuses.find(row => String(row['번호']) === String(stuNum)) || {};
+            let debugStatHtml = `<div style="background:#fef5e7; padding:15px; border-radius:8px; border-left: 4px solid #e67e22; color: #333; font-size: 0.95em; word-break: break-all;">`;
+            if (Object.keys(statusRecord).length > 0) {
+                for (let key in statusRecord) {
+                    let val = statusRecord[key] || "비어있음";
+                    debugStatHtml += `<div style="margin-bottom:5px;"><strong>[${key}]</strong> : ${val}</div>`;
+                }
+            } else {
+                debugStatHtml += `<div>해당 학생의 실시간 현황 데이터가 없습니다.</div>`;
+            }
+            debugStatHtml += `</div>`;
+            document.getElementById('debugStatusArea').innerHTML = debugStatHtml;
+        }
+
+        function calculateTotal() {
+            let s1 = parseInt(document.getElementById('score1').value) || 0;
+            let s2 = parseInt(document.getElementById('score2').value) || 0;
+            let s3 = parseInt(document.getElementById('score3').value) || 0;
+
+            // 점수 초과 방지 로직
+            if (s1 > 5) { s1 = 5; document.getElementById('score1').value = 5; }
+            if (s2 > 10) { s2 = 10; document.getElementById('score2').value = 10; }
+            if (s3 > 5) { s3 = 5; document.getElementById('score3').value = 5; }
+
+            document.getElementById('totalScore').value = s1 + s2 + s3;
+        }
+
+        async function saveGrade() {
+            if (!selectedStudent) return;
+            const btn = document.querySelector('.btn-save');
+            btn.innerText = "저장 중...";
+            btn.disabled = true;
+
+            const payload = {
+                action: 'grade',
+                grade: selectedStudent['학년'],
+                stuClass: selectedStudent['반'],
+                stuNum: selectedStudent['번호'],
+                score1: document.getElementById('score1').value,
+                score2: document.getElementById('score2').value,
+                score3: document.getElementById('score3').value,
+                totalScore: document.getElementById('totalScore').value,
+                feedback: document.getElementById('teacherFeedback').value
+            };
+
+            try {
+                const response = await fetch(BASE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("서버 응답 오류: 저장이 완료되지 않았습니다.");
+                }
+
+                selectedStudent['score1'] = payload.score1;
+                selectedStudent['score2'] = payload.score2;
+                selectedStudent['score3'] = payload.score3;
+                selectedStudent['feedback'] = payload.feedback;
+                selectedStudent['총점'] = payload.totalScore;
+
+                renderStudentList();
+            } catch (error) {
+                alert("❌ 저장 중 오류가 발생했습니다.");
+            } finally {
+                btn.innerText = "채점 결과 저장";
+                btn.disabled = false;
+            }
+        }
+
+        function printClassStatus() {
+            if (currentSubmissions.length === 0) {
+                alert("먼저 인쇄할 학년과 반을 선택하고 [데이터 불러오기]를 눌러주세요.");
+                return;
+            }
+
+            const grade = document.getElementById('filterGrade').value;
+            const cls = document.getElementById('filterClass').value;
+            const sortedData = [...currentSubmissions].sort((a, b) => (parseInt(a['번호']) || 0) - (parseInt(b['번호']) || 0));
+            let printHtml = `
+                <style>
+                    @page { size: portrait; margin: 15mm; } 
+                </style>
+                <div class="print-title">수학 수행평가 채점 현황 (${grade}학년 ${cls}반)</div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th width="8%">연번</th>
+                            <th width="12%">학번</th>
+                            <th width="15%">이름</th>
+                            <th width="15%">조사/재구성<br>(5점)</th>
+                            <th width="15%">현상 분석<br>(10점)</th>
+                            <th width="15%">가치 제시<br>(5점)</th>
+                            <th width="12%">총점<br>(20점)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedData.forEach(student => {
+                const num = student['번호'] || '';
+                let hakbun = getFuzzy(student, ['학번']);
+                if (!hakbun && num) {
+                    hakbun = `${grade}${cls.padStart(2, '0')}${String(num).padStart(2, '0')}`;
+                }
+                const name = student['이름'] || '';
+                const sc1 = student['score1'] || getFuzzy(student, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const sc2 = student['score2'] || getFuzzy(student, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const sc3 = student['score3'] || getFuzzy(student, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const total = student['총점'] || getFuzzy(student, ['총점', '총점(20점)', 'totalScore']) || '';
+
+                printHtml += `
+                    <tr>
+                        <td>${num}</td>
+                        <td>${hakbun}</td>
+                        <td>${name}</td>
+                        <td>${sc1}</td>
+                        <td>${sc2}</td>
+                        <td>${sc3}</td>
+                        <td><strong>${total}</strong></td>
+                    </tr>
+                `;
+            });
+
+            printHtml += `</tbody></table>`;
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHtml;
+            printArea.style.display = 'block';
+
+            setTimeout(() => {
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
+            }, 100);
+        }
+
+        function openPrintModal() { document.getElementById('printModalOverlay').style.display = 'flex'; }
+        function closePrintModal() { document.getElementById('printModalOverlay').style.display = 'none'; }
+
+        function printAllClassesStatus() {
+            const grade = document.getElementById('filterGrade').value;
+            const tableContainer = document.getElementById('allClassesTableContainer');
+
+            if (!grade) {
+                alert("먼저 확인하실 '학년'을 선택해주세요.");
+                return;
+            }
+            if (!tableContainer.innerHTML || tableContainer.innerHTML.includes('데이터를 계산 중') || tableContainer.innerHTML.includes('데이터가 없습니다')) {
+                alert("먼저 상단의 [전체반 채점확인] 버튼을 눌러 데이터를 화면에 불러와주세요.");
+                return;
+            }
+
+            let printHtml = `
+                <style>
+                    @page { size: landscape; margin: 10mm; }
+                </style>
+                <div class="print-title">${grade}학년 전체반 채점 현황</div>
+                ${tableContainer.innerHTML}
+            `;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = printHtml;
+            printArea.style.display = 'block';
+
+            setTimeout(() => {
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
+            }, 100);
+        }
+
+
+
+
+
+        // 🌟 통합된 학생 답안 인쇄 함수 (개별/연속 모두 처리)
+        function printStudentAnswers() {
+            const checkedBoxes = document.querySelectorAll('.student-checkbox:checked');
+            let studentsToPrint = [];
+
+            // 1. 체크박스에 선택된 학생이 있는지 먼저 확인
+            if (checkedBoxes.length > 0) {
+                checkedBoxes.forEach(box => {
+                    const studentIndex = box.value;
+                    studentsToPrint.push(currentSubmissions[studentIndex]);
+                });
+            }
+            // 2. 체크된 학생이 없으면 현재 화면에 열려있는(선택된) 학생 확인
+            else if (selectedStudent) {
+                studentsToPrint.push(selectedStudent);
+            }
+
+            // 3. 둘 다 없으면 경고창
+            if (studentsToPrint.length === 0) {
+                alert("인쇄할 학생을 체크박스에서 선택하거나 왼쪽 명단에서 클릭해주세요.");
+                return;
+            }
+
+            let combinedHtml = `<style>@page { size: portrait; margin: 10mm; }</style>`;
+
+            studentsToPrint.forEach((s, index) => {
+                const grade = s['학년'] || '';
+                const cls = s['반'] || '';
+                const num = s['번호'] || '';
+                const name = s['이름'] || '';
+
+                const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+                // 🌟 참고 자료 불러오기
+                const ref1 = getFuzzy(s, ['참고자료1', '참고 자료1', '참고자료 1', 'ref1']) || '-';
+                const ref2 = getFuzzy(s, ['참고자료2', '참고 자료2', '참고자료 2', 'ref2']) || '-';
+                const ref3 = getFuzzy(s, ['참고자료3', '참고 자료3', '참고자료 3', 'ref3']) || '-';
+
+                const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+                const dataPoints = getFuzzy(s, ['입력 데이터', '입력데이터', 'dataPoints']) || '-';
+                let rawFormula = getFuzzy(s, ['산출된 함수식', '함수식', 'formula']) || '수식 없음';
+                let cleanFormula = rawFormula.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim();
+
+                const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+                const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+                const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+
+                const sc1 = s['score1'] || getFuzzy(s, ['실세계 현상 조사 및 재구성하기(5점)', '실세계 현상 조사 및 재구성하기']) || '';
+                const sc2 = s['score2'] || getFuzzy(s, ['함수 개념을 통해 현상 분석하기(10점)', '함수 개념을 통해 현상 분석하기']) || '';
+                const sc3 = s['score3'] || getFuzzy(s, ['대수 개념의 유용성 가치 제시하기(5점)', '대수 개념의 유용성 가치 제시하기']) || '';
+                const total = s['총점'] || getFuzzy(s, ['총점', '총점(20점)', 'totalScore']) || '';
+                const feedback = s['feedback'] || getFuzzy(s, ['교사 피드백', '피드백', 'feedback']) || '작성된 피드백이 없습니다.';
+
+                // 마지막 학생이 아니면 페이지 나누기 적용
+                const pageBreakStyle = (index < studentsToPrint.length - 1) ? 'page-break-after: always;' : '';
+
+                let singleHtml = `
+                <div style="max-width: 800px; margin: 0 auto; font-family: 'Pretendard', sans-serif; padding: 5px; font-size: 10pt; ${pageBreakStyle}">
+                    <div class="print-title" style="border-bottom: 2px solid #2c3e50; padding-bottom: 5px; margin-bottom: 10px;">
+                        학생 개별 답안 및 채점 결과
+                    </div>
+                    <div style="margin-bottom: 10px; font-size: 1.05em; text-align: right;">
+                        <strong>${grade}학년 ${cls}반 ${num}번 ${name}</strong>
+                    </div>
+                    <table class="print-table" style="width: 100%; text-align: left; margin-bottom: 10px;">
+                        <tr><th style="width: 20%; text-align: center; padding: 5px;">기사 제목</th><td style="padding-left: 8px; padding: 5px;"><strong>${title}</strong></td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">참고 자료</th><td style="padding-left: 8px; padding: 5px; line-height: 1.4;">1. ${ref1}<br>2. ${ref2}<br>3. ${ref3}</td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">선정 이유</th><td style="padding-left: 8px; padding: 5px;">${reason}</td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">입력 데이터</th><td style="padding-left: 8px; padding: 5px;">${dataPoints}</td></tr>
+                      
+                      <tr><th style="text-align: center; padding: 2px 5px;">산출된 함수식</th><td style="text-align: center; font-size: 1em; padding: 2px 5px;">${cleanFormula}</td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">(1) 수학적 특징</th><td style="padding-left: 8px; padding: 5px;">${obs1}</td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">(2) 현상 해석</th><td style="padding-left: 8px; padding: 5px;">${obs2}</td></tr>
+                        <tr><th style="text-align: center; padding: 5px;">(3) 가치 성찰</th><td style="padding-left: 8px; padding: 5px;">${obs3}</td></tr>
+                    </table>
+                    <div style="margin-top: 15px; font-size: 1.1em; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
+                        ✅ 평가 결과
+                    </div>
+                    <table class="print-table" style="width: 100%; margin-top: 5px; text-align: center;">
+                        <tr>
+                            <th style="text-align: center; padding: 5px;">조사/재구성 (5점)</th>
+                            <th style="text-align: center; padding: 5px;">현상 분석 (10점)</th>
+                            <th style="text-align: center; padding: 5px;">가치 제시 (5점)</th>
+                            <th style="text-align: center; background-color: #f1c40f !important; padding: 5px;">총점 (20점)</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">${sc1}</td>
+                            <td style="padding: 5px;">${sc2}</td>
+                            <td style="padding: 5px;">${sc3}</td>
+                            <td style="padding: 5px;"><strong style="font-size: 1.1em; color: #d35400;">${total}</strong></td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 10px;">
+                        <strong>📝 채점 특이사항:</strong>
+                        <div style="padding: 8px; border: 1px solid #000; border-radius: 5px; margin-top: 5px; line-height: 1.4;">
+                            ${feedback.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                </div>
+                `;
+                combinedHtml += singleHtml;
+            });
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = combinedHtml;
+            printArea.style.display = 'block';
+
+
+
+
+            if (window.MathJax) {
+                if (MathJax.typesetClear) {
+                    MathJax.typesetClear([printArea]); // 인쇄 영역 캐시 초기화 추가
+                }
+                MathJax.typesetPromise([printArea]).then(() => {
+                    window.print();
+                    printArea.style.display = 'none';
+                    closePrintModal();
+                });
+            } else {
+                // MathJax 로드 실패 시에도 기본 인쇄창 띄우기
+                window.print();
+                printArea.style.display = 'none';
+                closePrintModal();
+            }
+
+
+        }
+
+        function copyAIPrompt() {
+            if (!selectedStudent) {
+                alert("학생을 먼저 선택해주세요.");
+                return;
+            }
+
+            const s = selectedStudent;
+            const name = s['이름'] || '';
+            const funcArea = getFuzzy(s, ['분석영역', '분석 영역', 'funcArea']) || '미지정';
+            const title = getFuzzy(s, ['기사제목', '기사 제목', 'articleTitle']) || '제목 없음';
+            const reason = getFuzzy(s, ['선정 이유', '선정이유', 'reason']) || '내용 없음';
+            const obs1 = getFuzzy(s, ['(1) 수학적 특징', '수학적 특징', 'obs1']) || '내용 없음';
+            const obs2 = getFuzzy(s, ['(2) 현상 해석', '현상 해석', 'obs2']) || '내용 없음';
+            const obs3 = getFuzzy(s, ['(3) 가치 성찰', '가치 성찰', 'obs3']) || '내용 없음';
+            const total = document.getElementById('totalScore').value || '미채점';
+            const feedback = document.getElementById('teacherFeedback').value || '피드백 없음';
+
+            const promptText = `당신은 고등학교 2학년 '대수' 과목을 가르치는 전문적이고 통찰력 있는 수학 교사입니다. 
+다음은 우리 반 학생(${name})이 제출한 '함수 기사문 작성' 수행평가 결과물과 교사의 평가 내용입니다. 
+
+이 데이터를 바탕으로 학교생활기록부 '세부능력 및 특기사항(세특)'에 들어갈 문구를 작성해 주세요.
+
+[학생 작성 데이터]
+- 탐구 영역: ${funcArea}
+- 기사 제목: ${title}
+- 주제 선정 이유: ${reason}
+- 그래프의 수학적 특징 분석: ${obs1}
+- 실세계 현상 해석: ${obs2}
+- 수학적 유용성 및 가치 성찰: ${obs3}
+
+[교사 평가 결과]
+- 총점: ${total}점 / 20점 만점
+- 교사 관찰 피드백: ${feedback}
+[작성 조건 - 매우 중요]
+1. 글자 수는 공백 포함 400자 이상, 500자 이내로 엄격하게 맞춰주세요.
+2. 문체는 객관적이고 학술적인 학교생활기록부 평어체(~함, ~임, ~능력을 보임 등)를 사용하세요.
+3. (수식 기재 금지) NEIS 생기부 시스템상 수식 입력이 어려우므로, 학생이 구한 구체적인 함수식(예: y=2x+1 등)은 절대 기재하지 마세요. 대신 "실생활 데이터를 바탕으로 지수함수(또는 삼각함수)의 형태로 모델링하여~"와 같이 서술형으로 부드럽게 풀어서 설명하세요.
+4. (요약 및 정리 역량 강조) 학생이 복잡하고 방대한 실생활 데이터를 수집한 후, 그 속에 숨겨진 수학적 특징과 현상의 의미를 논리적이고 체계적으로 '요약 및 정리하는 능력'이 매우 뛰어나다는 점을 문장 속에 자연스럽게 강조해 주세요.
+5. 학생의 '대수적 사고력', '문제해결역량', '정보 처리 역량'이 돋보이도록 학업 역량 위주로 서술하세요.
+6. 출력 결과물(생기부 문장)에는 학생의 이름은 절대 포함하지 마세요. (이름 대신 주어를 생략하거나 '이 학생은', '내용을 바탕으로~' 등의 형태로 서술하세요.)
+7. (한국어 표기 우선) 문장 내 용어나 표현을 선택할 때 영어식 표기나 무분별한 외래어 대신 직관적이고 올바른 한국어 표기를 우선적으로 사용해 주세요. 대체 불가능한 학술 전문 용어나 고유 명사 등 어쩔 수 없는 경우에만 제한적으로 영어 표현을 허용합니다.
+8. (가운뎃점 및 기호 사용 금지) 문장 내에 가운뎃점(·)이나 대시(-), 별표(*) 등 항목을 나열할 때 쓰는 문장 부호나 특수 기호를 절대 사용하지 마세요. 열거할 내용이 있다면 문장 부호 대신 '및', '그리고', '이와 더불어' 등의 어휘를 사용하여 자연스럽게 이어지는 하나의 줄글 문장으로만 작성해야 합니다.
+9. 출력 결과물에는 다른 부연 설명 없이 생기부에 들어갈 문장만 딱 출력해 주세요.`;
+
+
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert(`✅ ${name} 학생의 AI 생기부 프롬프트가 복사되었습니다!\n(수식/이름 제외 및 요약능력 강조 적용 완료)\n\nChatGPT나 Gemini 입력창에 '붙여넣기(Ctrl+V)' 하세요.`);
+            }).catch(err => {
+                alert("❌ 복사에 실패했습니다. 브라우저 권한을 확인해주세요.");
+                console.error('클립보드 복사 에러:', err);
+            });
+        }
+    </script>
+
+    <div id="printArea" style="display: none;"></div>
+
+    <div class="modal-overlay" id="printModalOverlay">
+        <div class="print-modal">
+            <h3>🖨️ 무엇을 인쇄할까요?</h3>
+            <button class="print-option-btn" onclick="printClassStatus()">📊 현재 반 전체 채점 결과 인쇄</button>
+
+            <button class="print-option-btn" style="background:#fef9e7; border-color:#f1c40f;"
+                onclick="printStudentAnswers()">📄 학생 개별/연속 답안 인쇄</button>
+
+            <button class="print-option-btn" style="background:#e8f4fd; border-color:#3498db;"
+                onclick="printAllClassesStatus()">🏫 전체 반 채점 결과 인쇄</button>
+            <button class="close-modal-btn" onclick="closePrintModal()">닫기</button>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
