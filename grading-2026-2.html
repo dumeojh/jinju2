@@ -497,6 +497,9 @@
                 <select id="filterClass" onchange="renderList()">
                     <option value="">전체 학급</option>
                 </select>
+                <select id="filterDate" onchange="renderList()">
+                    <option value="">전체 날짜</option>
+                </select>
                 <select id="filterState" onchange="renderList()">
                     <option value="">채점 상태 전체</option>
                     <option value="todo">미채점만</option>
@@ -643,6 +646,14 @@
             return String(h).toLowerCase().replace(/[\s_\-()·.]/g, '');
         }
 
+        /** 제출 시각 → 'YYYY-MM-DD' (시험을 날짜별로 나누는 기준) */
+        function dayOf(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            if (isNaN(d)) return String(ts).slice(0, 10);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
         function mapRow(obj) {
             const out = {};
             const entries = Object.entries(obj);
@@ -650,6 +661,7 @@
                 const hit = entries.find(([k]) => aliases.includes(normKey(k)));
                 out[field] = hit ? String(hit[1] ?? '') : '';
             });
+            out.examDate = dayOf(out.timestamp);   // 시험 날짜
             // 매핑되지 않은 열도 보존
             out._raw = obj;
             return out;
@@ -727,7 +739,7 @@
             if (rawRows) {
                 rawRows.forEach(r => {
                     if (r.total == null) return;
-                    const k = `score_${ASSESS_ID}_${r.grade}_${r.stu_class}_${r.stu_num}`;
+                    const k = `score_${ASSESS_ID}_${dayOf(r.created_at)}_${r.grade}_${r.stu_class}_${r.stu_num}`;
                     localStorage.setItem(k, JSON.stringify({
                         assessId: ASSESS_ID,
                         grade: r.grade, stuClass: r.stu_class, stuNum: r.stu_num, stuName: r.stu_name,
@@ -739,16 +751,24 @@
                 });
             }
 
-            // 학년-반-번호 순 정렬, 같은 학생이 여러 번 제출했으면 마지막 것만 사용
+            // 날짜가 다르면 별개의 시험으로 봅니다.
+            // 같은 날 같은 학생이 두 번 제출했을 때만 마지막 것을 남깁니다.
             const seen = new Map();
-            list.forEach(s => seen.set(`${s.grade}-${s.stuClass}-${s.stuNum}`, s));
+            list.forEach(s => seen.set(`${s.examDate}-${s.grade}-${s.stuClass}-${s.stuNum}`, s));
             students = [...seen.values()].sort((a, b) =>
+                String(b.examDate).localeCompare(String(a.examDate)) ||
                 (a.grade - b.grade) || (a.stuClass - b.stuClass) || (a.stuNum - b.stuNum));
 
             const sel = document.getElementById('filterClass');
             const classes = [...new Set(students.map(s => `${s.grade}-${s.stuClass}`))];
             sel.innerHTML = '<option value="">전체 학급</option>' +
                 classes.map(c => `<option value="${c}">${c.split('-')[0]}학년 ${c.split('-')[1]}반</option>`).join('');
+
+            // 시험 날짜 목록 (최근 날짜가 위로)
+            const selDate = document.getElementById('filterDate');
+            const dates = [...new Set(students.map(s => s.examDate).filter(Boolean))].sort().reverse();
+            selDate.innerHTML = '<option value="">전체 날짜</option>' +
+                dates.map(d => `<option value="${d}">${d}</option>`).join('');
 
             currentIdx = -1;
             document.getElementById('detailArea').innerHTML =
@@ -758,7 +778,8 @@
         }
 
         /** ---------------- 저장 (로컬) ---------------- **/
-        function keyOf(s) { return `score_${ASSESS_ID}_${s.grade}_${s.stuClass}_${s.stuNum}`; }
+        // 같은 학생이 날짜를 달리해 여러 번 응시할 수 있으므로 날짜까지 키에 넣습니다.
+        function keyOf(s) { return `score_${ASSESS_ID}_${s.examDate}_${s.grade}_${s.stuClass}_${s.stuNum}`; }
 
         function getScore(s) {
             try { return JSON.parse(localStorage.getItem(keyOf(s))) || null; } catch (e) { return null; }
@@ -767,6 +788,7 @@
         /** ---------------- 목록 렌더 ---------------- **/
         function renderList() {
             const fc = document.getElementById('filterClass').value;
+            const fd = document.getElementById('filterDate').value;
             const fs = document.getElementById('filterState').value;
             const q = document.getElementById('searchBox').value.trim();
 
@@ -775,6 +797,7 @@
 
             students.forEach((s, i) => {
                 if (fc && `${s.grade}-${s.stuClass}` !== fc) return;
+                if (fd && s.examDate !== fd) return;
                 if (q && !(`${s.stuName}${s.stuNum}`.includes(q))) return;
                 const sc = getScore(s);
                 if (fs === 'todo' && sc) return;
@@ -785,7 +808,7 @@
                 html += `<div class="stu-item ${i === currentIdx ? 'active' : ''}" onclick="selectStudent(${i})">
                     <div>
                         <b>${s.grade}-${s.stuClass}-${String(s.stuNum).padStart(2, '0')} ${s.stuName || '(이름없음)'}</b>
-                        <div class="stu-meta">${late ? '⚠️ ' + s.submitType : ''}</div>
+                        <div class="stu-meta">${s.examDate || ''}${late ? ' · ⚠️ ' + s.submitType : ''}</div>
                     </div>
                     ${sc ? `<span class="badge badge-done">${sc.total}점</span>`
                         : `<span class="badge ${late ? 'badge-warn' : 'badge-todo'}">미채점</span>`}
