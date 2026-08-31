@@ -276,6 +276,25 @@
             overflow: hidden;
         }
 
+        /* 바로 위 답안에 대한 채점표임을 눈에 보이게 붙여 줍니다 */
+        .criterion.attached {
+            margin-top: -8px;
+            margin-left: 18px;
+            border-left: 4px solid var(--accent);
+            border-top-left-radius: 0;
+        }
+
+        .criterion.attached .criterion-head {
+            background: #e8f0f8;
+        }
+
+        .criterion.attached .criterion-head .for-what {
+            font-weight: normal;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-left: 6px;
+        }
+
         .criterion-head {
             background: #eef2f7;
             padding: 12px 15px;
@@ -809,49 +828,54 @@
                 </div>
             </div>
 
-            <div class="section-title">📄 학생 답안</div>
+            <div class="section-title">📄 학생 답안 · 채점</div>`;
 
-            <div class="answer-block">
+            /** 답안 한 덩어리를 보여 주고, 그 바로 밑에 해당 평가 요소 채점표를 붙입니다.
+             *  rubric 값을 바꾸면 채점표가 붙는 위치가 바뀝니다. (null 이면 채점표 없음)
+             *  예) c1 을 3번 답안 밑으로 옮기려면 아래 두 줄의 rubric 값을 서로 바꾸세요. */
+            const BLOCKS = [
+                {
+                    rubric: null,
+                    html: `<div class="answer-block">
                 <h4>1. 주제 · 참고자료</h4>
                 <div class="answer-text"><b>제목:</b> ${esc(s.articleTitle) || '(미작성)'}
 ${refs.length ? refs.map((r, n) => `[자료${n + 1}] ${esc(r)}`).join('\n') : '(참고자료 미작성)'}</div>
-            </div>
-
-            <div class="answer-block">
+            </div>`
+                },
+                {
+                    rubric: 'c1',
+                    html: `<div class="answer-block">
                 <h4>2. 주제 선정 이유 및 설명</h4>
                 <div class="answer-text">${esc(s.reason) || '(미작성)'}</div>
-            </div>
-
-            <div class="answer-block">
+            </div>`
+                },
+                {
+                    rubric: null,
+                    html: `<div class="answer-block">
                 <h4>3. 수집 데이터 및 도출된 함수식 <span class="hint">(공학적 도구 활용)</span></h4>
                 <div class="answer-text">${esc(s.dataPoints) || '(미입력)'}</div>
                 <div class="formula-box" id="formulaBox" style="margin-top:12px;">${esc(s.formula) || '(식 없음)'}</div>
-            </div>
-
-            <div class="answer-block">
-                <h4>4. 그래프 설명하기 <span class="hint">→ 두 번째 평가 요소 채점 근거</span></h4>
+            </div>`
+                },
+                {
+                    rubric: 'c2',
+                    html: `<div class="answer-block">
+                <h4>4. 그래프 설명하기</h4>
                 <div class="answer-text">${esc(s.obs1) || '(미작성)'}</div>
-            </div>
-
-            <div class="answer-block">
-                <h4>5. 실생활 해석하기 <span class="hint">→ 세 번째 평가 요소 채점 근거</span></h4>
+            </div>`
+                },
+                {
+                    rubric: 'c3',
+                    html: `<div class="answer-block">
+                <h4>5. 실생활 해석하기</h4>
                 <div class="answer-text">${esc(s.obs2) || '(미작성)'}</div>
-            </div>
+            </div>`
+                }
+            ];
 
-            <div class="section-title" style="margin-top:30px;">🖊️ 채점 기준 (수행 수준)</div>`;
-
-            RUBRIC.forEach(c => {
-                html += `<div class="criterion">
-                    <div class="criterion-head">
-                        <span>${c.name} (${c.max}점)</span>
-                        <span id="disp_${c.id}" style="color:#27ae60;">- / ${c.max}</span>
-                    </div>
-                    ${c.levels.map(l => `
-                        <div class="level-row" id="row_${c.id}_${l.s}" onclick="pick('${c.id}',${l.s})">
-                            <div class="level-score">${l.s}</div>
-                            <div>${l.d}</div>
-                        </div>`).join('')}
-                </div>`;
+            BLOCKS.forEach(b => {
+                html += b.html;
+                if (b.rubric) html += criterionHtml(b.rubric, true);
             });
 
             html += `
@@ -887,6 +911,24 @@ ${refs.length ? refs.map((r, n) => `[자료${n + 1}] ${esc(r)}`).join('\n') : '(
 
         function esc(t) {
             return String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        /** 평가 요소 하나의 채점표 HTML.
+         *  attached=true 면 바로 위 답안에 붙은 모양으로 그립니다. */
+        function criterionHtml(cid, attached) {
+            const c = RUBRIC.find(x => x.id === cid);
+            if (!c) return '';
+            return `<div class="criterion${attached ? ' attached' : ''}">
+                    <div class="criterion-head">
+                        <span>🖊️ ${c.name} (${c.max}점)<span class="for-what">↑ 위 답안 채점</span></span>
+                        <span id="disp_${c.id}" style="color:#27ae60;">- / ${c.max}</span>
+                    </div>
+                    ${c.levels.map(l => `
+                        <div class="level-row" id="row_${c.id}_${l.s}" onclick="pick('${c.id}',${l.s})">
+                            <div class="level-score">${l.s}</div>
+                            <div>${l.d}</div>
+                        </div>`).join('')}
+                </div>`;
         }
 
         const picked = {};
