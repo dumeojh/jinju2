@@ -84,43 +84,96 @@ async function sbUpdate(table, id, patch) {
 }
 
 /** ----------------------------------------------------------------------------
- *  명렬표(students)의 열 이름이 무엇이든 알아서 찾아 주는 도우미
- *  (grade / 학년 / hakN ... 어떤 이름이어도 아래 후보 안에 있으면 인식합니다)
+ *  명렬표(students) 읽기
+ *  실제 표 구조 : student_id / grade1_num / grade2_num / grade3_num / name / ...
+ *  학생 한 명이 학년마다 학번이 달라지므로, 해당 학년의 칸을 골라서 읽습니다.
  * -------------------------------------------------------------------------- */
-function sbPick(row, candidates) {
-    for (const c of candidates) {
-        if (row[c] !== undefined && row[c] !== null && row[c] !== '') return row[c];
+const SB_STUDENTS_NAME_COL = "name";
+const SB_STUDENTS_NUM_COL = { 1: "grade1_num", 2: "grade2_num", 3: "grade3_num" };
+
+/* 우리 학교 최대 반 수 — 학번 해석이 애매할 때 판단 기준으로 씁니다 */
+const SB_MAX_CLASS = 12;
+
+/** 학번 문자열 → { grade, cls, num }
+ *  아래 형태를 모두 알아봅니다.
+ *    "20305"      → 2학년 3반 5번
+ *    "0305"       → (칸이 알려주는 학년) 3반 5번
+ *    "305"        → (칸이 알려주는 학년) 3반 5번
+ *    "2-3-5", "2학년 3반 5번", "3-5" 처럼 구분자가 있는 경우
+ */
+function sbParseStuNo(raw, gradeHint, gradeLeads) {
+    if (raw === null || raw === undefined) return null;
+    const parts = String(raw).trim().split(/[^0-9]+/).filter(v => v !== '');
+    if (parts.length === 0) return null;
+
+    if (parts.length >= 3) {
+        return { grade: +parts[0], cls: +parts[1], num: +parts[2] };
     }
-    // 공백 제거 후 한 번 더 비교
-    for (const c of candidates) {
-        const target = String(c).replace(/\s+/g, '').toLowerCase();
-        for (const k in row) {
-            if (String(k).replace(/\s+/g, '').toLowerCase() === target) {
-                if (row[k] !== undefined && row[k] !== null && row[k] !== '') return row[k];
-            }
-        }
+    if (parts.length === 2) {
+        return { grade: +gradeHint, cls: +parts[0], num: +parts[1] };
+    }
+
+    const d = parts[0];
+    if (d.length >= 5) {
+        return { grade: +d[0], cls: +d.slice(1, 3), num: +d.slice(3) };
+    }
+    if (d.length === 4) {
+        // 네 자리는 두 가지로 읽힐 수 있습니다.
+        //   "1305" = 1학년 3반 5번   (학년+반+번호)
+        //   "1205" = 12반 5번        (반두자리+번호)
+        // 어느 쪽인지는 sbLoadStudents() 가 표 전체를 보고 판단해 알려 줍니다.
+        if (gradeLeads === true) return { grade: +d[0], cls: +d[1], num: +d.slice(2) };
+        if (gradeLeads === false) return { grade: +gradeHint, cls: +d.slice(0, 2), num: +d.slice(2) };
+
+        const cls = +d.slice(0, 2);
+        if (cls >= 1 && cls <= SB_MAX_CLASS) return { grade: +gradeHint, cls: cls, num: +d.slice(2) };
+        return { grade: +d[0], cls: +d[1], num: +d.slice(2) };
+    }
+    if (d.length === 3) {
+        return { grade: +gradeHint, cls: +d[0], num: +d.slice(1) };
     }
     return null;
-}
-
-/* 명렬표 한 줄 → { grade, cls, num, name } 로 정리 */
-function sbNormalizeStudent(row) {
-    return {
-        grade: String(sbPick(row, ['grade', '학년', 'hakyeon', 'gr']) ?? '').replace('학년', '').trim(),
-        cls: String(sbPick(row, ['stu_class', 'class', 'cls', '반', 'ban']) ?? '').replace('반', '').trim(),
-        num: String(sbPick(row, ['stu_num', 'num', 'number', 'no', '번호', 'beonho']) ?? '').replace('번', '').trim(),
-        name: String(sbPick(row, ['stu_name', 'name', '이름', '성명', 'student_name']) ?? '').trim(),
-        hakbun: sbPick(row, ['hakbun', '학번', 'student_id', 'sid'])
-    };
 }
 
 /* 명렬표 전체를 한 번 읽어 캐시해 둡니다 (같은 페이지에서 반복 호출해도 1회만 통신) */
 let _sbStudentCache = null;
 async function sbLoadStudents() {
     if (_sbStudentCache) return _sbStudentCache;
+
     const rows = await sbSelect(SB_TABLE_STUDENTS, 'select=*');
-    _sbStudentCache = rows.map(sbNormalizeStudent).filter(s => s.name || s.num);
-    return _sbStudentCache;
+
+    /** 네 자리 학번이 "학년+반+번호" 인지 "반두자리+번호" 인지 표 전체를 보고 판단합니다.
+     *  grade2_num 의 네 자리 값이 거의 전부 2로 시작한다면 → 맨 앞이 학년입니다. */
+    const gradeLeads = {};
+    for (const g of [1, 2, 3]) {
+        const four = rows
+            .map(r => String(r[SB_STUDENTS_NUM_COL[g]] ?? '').replace(/[^0-9]/g, ''))
+            .filter(v => v.length === 4);
+        if (four.length < 3) { gradeLeads[g] = undefined; continue; }
+        const lead = four.filter(v => v[0] === String(g)).length / four.length;
+        gradeLeads[g] = lead >= 0.9 ? true : (lead <= 0.1 ? false : undefined);
+    }
+
+    const list = [];
+
+    rows.forEach(r => {
+        const name = String(r[SB_STUDENTS_NAME_COL] ?? '').trim();
+        // 한 학생이 1·2·3학년 칸을 모두 가질 수 있으므로 채워진 칸마다 한 줄씩 만듭니다.
+        for (const g of [1, 2, 3]) {
+            const parsed = sbParseStuNo(r[SB_STUDENTS_NUM_COL[g]], g, gradeLeads[g]);
+            if (!parsed || !parsed.cls || !parsed.num) continue;
+            list.push({
+                grade: String(parsed.grade),
+                cls: String(parsed.cls),
+                num: String(parsed.num),
+                name: name,
+                studentId: r.student_id ?? null
+            });
+        }
+    });
+
+    _sbStudentCache = list;
+    return list;
 }
 
 /* 특정 학년·반의 명렬표만 (번호순 정렬) */

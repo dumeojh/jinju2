@@ -731,6 +731,16 @@
             try {
                 await sbInsert(SB_TABLE_SUBMISSIONS, row);   // 실패하면 예외가 발생합니다.
 
+                // 현황판이 '제출 완료'를 바로 알아보도록 기록도 한 줄 남깁니다.
+                sbInsert(SB_TABLE_LOGS, {
+                    grade: Number(grade),
+                    stu_class: Number(clsNum),
+                    stu_num: Number(num),
+                    stu_name: row.stu_name,
+                    event: 'submit',
+                    message: type
+                }).catch(e => console.warn('제출 기록 실패', e));
+
                 localStorage.setItem(studentKey, 'true');
 
                 alert("✅ 성공적으로 제출되었습니다!");

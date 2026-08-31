@@ -383,7 +383,10 @@
         };
         examChannel.postMessage('check_open');
 
-        const GOOGLE_SCRIPT_URL = BASE_SCRIPT_URL;
+        /** 저장 위치 : 1학기 표 (수파베이스)
+         *  접속 정보와 sbInsert 함수는 config.js 에 들어 있습니다. **/
+        const T_SUBS = SB_TABLE_SUBMISSIONS_1;
+        const T_LOGS = SB_TABLE_LOGS_1;
         const grid = document.getElementById('dataInputGrid');
         for (let i = 1; i <= 10; i++) {
             grid.innerHTML += `<div class="data-item">#${i} <input type="number" class="ix" placeholder="x"> <input type="number" class="iy" placeholder="y"></div>`;
@@ -461,22 +464,20 @@
                 return; // 강제 제출 후 아래 코드는 실행되지 않도록 막습니다.
             }
 
-            // 아래는 기존과 동일하게 구글 시트로 경고 내역을 보내는 코드입니다.
+            // 경고 내역을 수파베이스에 기록합니다.
             const grade = document.getElementById('gradeSelect').value;
             const clsNum = document.getElementById('classSelect').value;
             const num = document.getElementById('stuNum').value;
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: 'warning',
-                    grade: grade,
-                    stuClass: clsNum,
-                    stuNum: num,
-                    message: msg
-                })
-            });
+            // 기록이 실패해도 시험 진행은 막지 않습니다.
+            sbInsert(T_LOGS, {
+                grade: Number(grade) || null,
+                stu_class: Number(clsNum) || null,
+                stu_num: Number(num) || null,
+                stu_name: document.getElementById('stuName').value,
+                event: 'warning',
+                message: msg
+            }).catch(e => console.warn('경고 기록 실패', e));
         }
         let examTime = 45 * 60;
         let timerInterval;
@@ -542,17 +543,14 @@
 
             isExamStarted = true;
 
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({
-                    action: 'start',
-                    grade: grade,
-                    stuClass: clsNum,
-                    stuNum: num,
-                    stuName: name
-                })
-            });
+            sbInsert(T_LOGS, {
+                grade: Number(grade),
+                stu_class: Number(clsNum),
+                stu_num: Number(num),
+                stu_name: name,
+                event: 'start',
+                message: '시험 시작'
+            }).catch(e => console.warn('시작 기록 실패', e));
 
             startTimer();
         }
@@ -690,32 +688,38 @@
 
             const refs = document.querySelectorAll('.ref');
 
-            const payload = {
-                action: 'submit',  // 👈 이 줄을 반드시 추가해 주세요! (구글 서버에게 최종 제출임을 알림)
-                grade: grade,
-                stuClass: clsNum,
-                stuNum: num,
-                stuName: document.getElementById('stuName').value,
-                funcArea: document.getElementById('funcArea').value,
-                articleTitle: document.getElementById('articleTitle').value,
+            const row = {
+                grade: Number(grade),
+                stu_class: Number(clsNum),
+                stu_num: Number(num),
+                stu_name: document.getElementById('stuName').value,
+                func_area: document.getElementById('funcArea').value,
+                article_title: document.getElementById('articleTitle').value,
                 ref1: refs[0].value,
                 ref2: refs[1].value,
                 ref3: refs[2].value,
                 reason: document.getElementById('reason').value,
-                dataPoints: ptsArr.join(', '),
+                data_points: ptsArr.join(', '),
                 formula: document.getElementById('outFormula').innerText.replace("산출된 함수식", "").trim(),
                 obs1: document.getElementById('obs1').value,
                 obs2: document.getElementById('obs2').value,
                 obs3: document.getElementById('obs3').value,
-                submitType: type
+                submit_type: type,
+                warn_count: warningCount
             };
 
             try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(payload)
-                });
+                await sbInsert(T_SUBS, row);   // 실패하면 예외가 발생합니다.
+
+                // 현황판이 '제출 완료'를 바로 알아보도록 기록도 한 줄 남깁니다.
+                sbInsert(T_LOGS, {
+                    grade: Number(grade),
+                    stu_class: Number(clsNum),
+                    stu_num: Number(num),
+                    stu_name: row.stu_name,
+                    event: 'submit',
+                    message: type
+                }).catch(e => console.warn('제출 기록 실패', e));
 
                 localStorage.setItem(studentKey, 'true');
 
@@ -727,7 +731,8 @@
                 document.getElementById('timerDisplay').innerText = "✅ 제출 완료";
 
             } catch (e) {
-                alert("❌ 오류가 발생했습니다. 화면을 캡처한 후 선생님께 문의하세요.");
+                console.error(e);
+                alert("❌ 저장에 실패했습니다. 화면을 캡처한 후 선생님께 문의하세요.\n\n(" + e.message + ")");
                 btn.disabled = false; btn.innerText = "다시 제출";
                 isExamStarted = true;
             }

@@ -348,6 +348,12 @@
                     if (r.event === 'start') {
                         s.attempts++;
                         if (!s.start) s.start = r.created_at;
+                    } else if (r.event === 'submit') {
+                        // 답안 조회가 잠겨 있어도 제출 여부를 알 수 있게 해 주는 기록
+                        if (!s.end) s.end = r.created_at;
+                        const t = String(r.message || '');
+                        if (t.includes('시간초과')) s.timeout = true;
+                        if (t.includes('강제제출')) s.forced = true;
                     } else if (r.event === 'warning') {
                         const msg = String(r.message || '');
                         if (msg.includes('강제제출')) {
