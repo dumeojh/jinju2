@@ -247,8 +247,7 @@
 
                 <div class="auth-row" id="examCodeRow">
                     <label>시험 접속 코드</label>
-                    <input type="password" id="examCode" placeholder="선생님이 안내한 접속 코드를 입력하세요"
-                        autocomplete="off">
+                    <input type="password" id="examCode" placeholder="선생님이 안내한 접속 코드를 입력하세요" autocomplete="off">
                 </div>
                 <div class="auth-row">
                     <label>학년 및 반 선택</label>
@@ -268,23 +267,16 @@
                             <option value="5">5반</option>
                             <option value="6">6반</option>
                             <option value="7">7반</option>
-                            <option value="8">8반</option>
-                            <option value="9">9반</option>
-                            <option value="10">10반</option>
-                            <option value="11">11반</option>
-                            <option value="12">12반</option>
                         </select>
                     </div>
                 </div>
                 <div class="auth-row">
                     <label>번호 및 이름</label>
                     <div style="display:flex; gap:10px;">
-                        <input type="number" id="stuNum" placeholder="번호"
-                            inputmode="numeric" autocomplete="off" onchange="fillNameFromRoster()"
-                            onblur="fillNameFromRoster()">
-                        <input type="text" id="stuName" placeholder="번호를 입력하면 이름이 나옵니다"
-                            lang="ko" autocomplete="off" autocapitalize="off" autocorrect="off"
-                            spellcheck="false" style="ime-mode: active;">
+                        <input type="number" id="stuNum" placeholder="번호" inputmode="numeric" autocomplete="off"
+                            onchange="fillNameFromRoster()" onblur="fillNameFromRoster()">
+                        <input type="text" id="stuName" placeholder="번호를 입력하면 이름이 나옵니다" lang="ko" autocomplete="off"
+                            autocapitalize="off" autocorrect="off" spellcheck="false" style="ime-mode: active;">
                     </div>
                 </div>
                 <button class="btn btn-start" onclick="startExam()">확인 (시험 시작)</button>
