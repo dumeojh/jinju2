@@ -525,13 +525,7 @@
         const ASSESS_ID = "2026-2-01";         // 평가 회차 식별자 (저장 키에 사용)
         // ============================================================================
 
-        /** ---------------- 수파베이스 접속 ---------------- **/
-        const SB_READY = (typeof SUPABASE_URL !== 'undefined' && typeof SUPABASE_ANON_KEY !== 'undefined');
-        const SB_HEADERS = SB_READY ? {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-        } : {};
+        /** 수파베이스 접속 정보(SB_READY, SB_HEADERS)는 config.js 에 모아 두었습니다. **/
 
         /** 채점 기준표 (수행평가 세부 기준 이미지 기준) **/
         const RUBRIC = [

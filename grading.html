@@ -728,7 +728,82 @@
 
     <script src="config.js"></script>
     <script>
-        const FETCH_URL = BASE_SCRIPT_URL;
+        /** ========================================================================
+         *  1학기(2026-1) 채점 — 수파베이스 버전
+         *  config.js 의 sbSelect / sbUpdate / sbStudentsOf 를 사용합니다.
+         * ====================================================================== */
+        const T_SUBS = SB_TABLE_SUBMISSIONS_1;
+        const T_LOGS = SB_TABLE_LOGS_1;
+
+        /* 수파베이스 한 줄 → 기존 코드가 쓰던 모양(한글 키 + 영문 키)으로 변환 */
+        function sbToSubmission(r) {
+            const n = v => (v === null || v === undefined) ? '' : v;
+            return {
+                _id: r.id,
+                '학년': r.grade,
+                '반': r.stu_class,
+                '번호': r.stu_num,
+                '이름': r.stu_name || '',
+                '학번': `${r.grade}${String(r.stu_class).padStart(2, '0')}${String(r.stu_num).padStart(2, '0')}`,
+                funcArea: n(r.func_area),
+                articleTitle: n(r.article_title),
+                ref1: n(r.ref1),
+                ref2: n(r.ref2),
+                ref3: n(r.ref3),
+                reason: n(r.reason),
+                dataPoints: n(r.data_points),
+                formula: n(r.formula),
+                obs1: n(r.obs1),
+                obs2: n(r.obs2),
+                obs3: n(r.obs3),
+                '제출유형': n(r.submit_type),
+                '이탈횟수': r.warn_count ?? 0,
+                '제출시각': n(r.created_at),
+                score1: n(r.score1),
+                score2: n(r.score2),
+                score3: n(r.score3),
+                '총점': n(r.total),
+                feedback: n(r.feedback)
+            };
+        }
+
+        /* exam_logs 를 학생별 현황 한 줄로 요약 (우측 하단 확인 패널용) */
+        function sbToStatuses(logRows) {
+            const map = {};
+            logRows.forEach(r => {
+                const num = parseInt(r.stu_num);
+                if (isNaN(num)) return;
+                if (!map[num]) map[num] = { '번호': num, '이름': r.stu_name || '', '시작시간': '', '응시횟수': 0, '최대경고': 0, '비고': '' };
+                const s = map[num];
+                if (r.stu_name) s['이름'] = r.stu_name;
+                if (r.event === 'start') {
+                    s['응시횟수']++;
+                    if (!s['시작시간']) s['시작시간'] = r.created_at;
+                } else if (r.event === 'warning') {
+                    const msg = String(r.message || '');
+                    if (msg.includes('강제제출')) { s['최대경고'] = 30; s['비고'] = '강제제출'; }
+                    else {
+                        const m = msg.match(/(\d+)차경고/);
+                        if (m) s['최대경고'] = Math.max(s['최대경고'], parseInt(m[1]));
+                    }
+                }
+            });
+            return Object.values(map);
+        }
+
+        /* 채점 결과를 수파베이스에 기록 */
+        async function sbSaveGrade(student, sc1, sc2, sc3, total, feedback) {
+            if (!student._id) throw new Error("저장 위치(id)를 찾을 수 없습니다. 데이터를 다시 불러와 주세요.");
+            const toNum = v => (v === '' || v === null || v === undefined) ? null : Number(v);
+            await sbUpdate(T_SUBS, student._id, {
+                score1: toNum(sc1),
+                score2: toNum(sc2),
+                score3: toNum(sc3),
+                total: toNum(total),
+                feedback: feedback || '',
+                graded_at: new Date().toISOString()
+            });
+        }
 
         let currentSubmissions = [];
         let currentStatuses = [];
@@ -762,23 +837,26 @@
             const listPanel = document.getElementById('studentListPanel');
 
             if (!grade || !cls) { alert("학년과 반을 선택해주세요."); return; }
+            if (!SB_READY) { alert("config.js에 수파베이스 주소(SUPABASE_URL)와 anon key를 먼저 입력해 주세요."); return; }
             listPanel.innerHTML = '<div style="text-align:center; padding:20px;">데이터를 불러오는 중... ⏳</div>';
 
             try {
-                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-                const res = await fetch(urlWithTime, { cache: 'no-store' });
-                const allData = await res.json();
+                const q = `select=*&grade=eq.${grade}&stu_class=eq.${cls}`;
+                const [subRows, logRows, roster] = await Promise.all([
+                    sbSelect(T_SUBS, q + '&order=stu_num.asc'),
+                    sbSelect(T_LOGS, q + '&order=created_at.asc').catch(() => []),
+                    sbStudentsOf(grade, cls).catch(() => [])
+                ]);
 
-                if (Array.isArray(allData)) {
-                    alert("🚨 [오류] 구글 서버가 아직 옛날 코드로 응답하고 있습니다!\n\n구글 앱스 스크립트 화면에서 우측 상단 [배포] -> [배포 관리] -> [수정(연필)] -> [새 버전]으로 배포를 꼭 완료해 주세요!");
-                    return;
-                }
+                currentSubmissions = subRows.map(sbToSubmission);
+                currentStatuses = sbToStatuses(logRows);
 
-                const subData = allData.submissions || [];
-                const statData = allData.status || [];
-
-                currentSubmissions = subData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
-                currentStatuses = statData.filter(row => String(row['학년']) === grade && String(row['반']) === cls);
+                // 명렬표에 이름이 있으면 보충 (학생이 이름을 다르게 적었을 때 대비)
+                const nameOf = {};
+                roster.forEach(r => { nameOf[parseInt(r.num)] = r.name; });
+                currentSubmissions.forEach(s => {
+                    if (!s['이름'] && nameOf[parseInt(s['번호'])]) s['이름'] = nameOf[parseInt(s['번호'])];
+                });
 
                 renderStudentList();
                 switchPanel('emptyState');
@@ -874,10 +952,6 @@
             btn.disabled = true;
 
             const payload = {
-                action: 'grade',
-                grade: student['학년'],
-                stuClass: student['반'],
-                stuNum: student['번호'],
                 score1: document.getElementById(`b_sc1_${index}`).value,
                 score2: document.getElementById(`b_sc2_${index}`).value,
                 score3: document.getElementById(`b_sc3_${index}`).value,
@@ -886,15 +960,7 @@
             };
 
             try {
-                const response = await fetch(BASE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error("서버 응답 오류: 저장이 완료되지 않았습니다.");
-                }
+                await sbSaveGrade(student, payload.score1, payload.score2, payload.score3, payload.totalScore, payload.feedback);
 
                 // 성공 시 로컬 데이터 갱신
                 student['score1'] = payload.score1;
@@ -910,7 +976,7 @@
                 btn.innerText = "저장완료";
                 btn.classList.add('saved');
             } catch (error) {
-                alert("❌ 저장 중 오류가 발생했습니다.");
+                alert("❌ 저장 중 오류가 발생했습니다.\n\n(" + error.message + ")");
                 btn.innerText = "저장 실패";
             } finally {
                 btn.disabled = false;
@@ -969,26 +1035,8 @@
                     rowBtn.innerText = "저장중..";
                     rowBtn.disabled = true;
 
-                    const payload = {
-                        action: 'grade',
-                        grade: s['학년'],
-                        stuClass: s['반'],
-                        stuNum: s['번호'],
-                        score1: sc1Val,
-                        score2: sc2Val,
-                        score3: sc3Val,
-                        totalScore: totVal,
-                        feedback: fbVal
-                    };
-
                     try {
-                        const response = await fetch(BASE_SCRIPT_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) throw new Error("서버 에러");
+                        await sbSaveGrade(s, sc1Val, sc2Val, sc3Val, totVal, fbVal);
 
                         // 로컬 데이터 갱신
                         s['score1'] = sc1Val;
@@ -1046,10 +1094,8 @@
             tableContainer.innerHTML = '<div style="text-align:center; padding:50px;">전체 데이터를 계산 중입니다... ⏳</div>';
 
             try {
-                const urlWithTime = FETCH_URL + (FETCH_URL.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-                const res = await fetch(urlWithTime, { cache: 'no-store' });
-                const allData = await res.json();
-                const subData = allData.submissions || [];
+                const subData = (await sbSelect(T_SUBS, `select=*&grade=eq.${grade}&order=stu_num.asc`))
+                    .map(sbToSubmission);
 
                 const targetClasses = ['1', '2', '3', '4', '5', '6'];
                 const classData = {};
@@ -1239,10 +1285,6 @@
             btn.disabled = true;
 
             const payload = {
-                action: 'grade',
-                grade: selectedStudent['학년'],
-                stuClass: selectedStudent['반'],
-                stuNum: selectedStudent['번호'],
                 score1: document.getElementById('score1').value,
                 score2: document.getElementById('score2').value,
                 score3: document.getElementById('score3').value,
@@ -1251,15 +1293,7 @@
             };
 
             try {
-                const response = await fetch(BASE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error("서버 응답 오류: 저장이 완료되지 않았습니다.");
-                }
+                await sbSaveGrade(selectedStudent, payload.score1, payload.score2, payload.score3, payload.totalScore, payload.feedback);
 
                 selectedStudent['score1'] = payload.score1;
                 selectedStudent['score2'] = payload.score2;
@@ -1269,7 +1303,7 @@
 
                 renderStudentList();
             } catch (error) {
-                alert("❌ 저장 중 오류가 발생했습니다.");
+                alert("❌ 저장 중 오류가 발생했습니다.\n\n(" + error.message + ")");
             } finally {
                 btn.innerText = "채점 결과 저장";
                 btn.disabled = false;
