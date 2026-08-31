@@ -511,7 +511,7 @@
         }
 
         /** [시험 시작] **/
-        function startExam() {
+        async function startExam() {
             const inputCode = document.getElementById('examCode').value;
 
             if (inputCode !== MASTER_EXAM_CODE) {
@@ -532,6 +532,43 @@
                 alert("🚨 이미 제출이 완료된 학번입니다. 중복 제출은 불가능합니다.");
                 return;
             }
+
+            /** ---------- 수파베이스 명렬표(students) 확인 ---------- **/
+            const startBtn = document.querySelector('.btn-start');
+            if (startBtn) { startBtn.disabled = true; startBtn.innerText = "명단 확인 중..."; }
+
+            let rosterName = '';
+            try {
+                const roster = await sbStudentsOf(grade, clsNum);
+
+                if (roster.length === 0) {
+                    alert(`🚨 ${grade}학년 ${clsNum}반 명단을 불러오지 못했습니다.\n선생님께 문의하세요.`);
+                    return;
+                }
+
+                const me = roster.find(s => Number(s.num) === Number(num));
+                if (!me) {
+                    alert(`🚨 명단에 없는 학생입니다.\n\n${grade}학년 ${clsNum}반 ${num}번은 명단에 없습니다.\n학년 · 반 · 번호를 다시 확인해 주세요.`);
+                    return;
+                }
+
+                const tidy = v => String(v || '').replace(/\s+/g, '');
+                if (tidy(me.name) && tidy(me.name) !== tidy(name)) {
+                    alert(`🚨 명단의 이름과 다릅니다.\n\n${grade}학년 ${clsNum}반 ${num}번의 이름을 다시 확인해 주세요.`);
+                    return;
+                }
+
+                rosterName = me.name || name;
+            } catch (e) {
+                console.error(e);
+                alert("🚨 명단을 확인할 수 없습니다. 선생님께 문의하세요.\n\n(" + e.message + ")");
+                return;
+            } finally {
+                if (startBtn) { startBtn.disabled = false; startBtn.innerText = "확인 (시험 시작)"; }
+            }
+
+            // 저장되는 이름을 명단 기준으로 통일합니다.
+            document.getElementById('stuName').value = rosterName;
 
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';

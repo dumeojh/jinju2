@@ -140,7 +140,9 @@ let _sbStudentCache = null;
 async function sbLoadStudents() {
     if (_sbStudentCache) return _sbStudentCache;
 
-    const rows = await sbSelect(SB_TABLE_STUDENTS, 'select=*');
+    // 필요한 열만 가져옵니다. (희망 계열·학과 같은 다른 정보는 받지 않습니다)
+    const cols = ['name', 'grade1_num', 'grade2_num', 'grade3_num'].join(',');
+    const rows = await sbSelect(SB_TABLE_STUDENTS, 'select=' + cols);
 
     /** 네 자리 학번이 "학년+반+번호" 인지 "반두자리+번호" 인지 표 전체를 보고 판단합니다.
      *  grade2_num 의 네 자리 값이 거의 전부 2로 시작한다면 → 맨 앞이 학년입니다. */
@@ -166,8 +168,7 @@ async function sbLoadStudents() {
                 grade: String(parsed.grade),
                 cls: String(parsed.cls),
                 num: String(parsed.num),
-                name: name,
-                studentId: r.student_id ?? null
+                name: name
             });
         }
     });
