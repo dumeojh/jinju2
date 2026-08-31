@@ -105,6 +105,11 @@
             box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
         }
 
+        /* 닫아 둔 메뉴는 회색으로 */
+        option:disabled {
+            color: #b2bec3;
+        }
+
         .footer {
             margin-top: 35px;
             font-size: 0.85em;
@@ -152,12 +157,34 @@
          *  ============================================================ */
         const USE_PASSWORD = false;
 
+        /** ============================================================
+         *  [설정] 지금 닫아 둘 메뉴
+         *  여기에 적힌 페이지는 목록에서 회색으로 바뀌고 선택되지 않습니다.
+         *  시험 볼 때 열어 주려면 해당 줄 앞에 // 를 붙이거나 지우세요.
+         *  ============================================================ */
+        const DISABLED_MENUS = [
+            "2026-1-01.html"
+            // "2026-2-01.html"   ← 2학기 학생용 (지금 열려 있음)
+        ];
+
         window.addEventListener('DOMContentLoaded', function () {
             if (!USE_PASSWORD) {
                 document.getElementById('authContainer').style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
             }
+            applyDisabledMenus();
         });
+
+        // 닫아 둔 메뉴를 선택할 수 없게 만듭니다.
+        function applyDisabledMenus() {
+            const opts = document.getElementById('menuSelect').options;
+            for (const opt of opts) {
+                if (opt.value && DISABLED_MENUS.includes(opt.value)) {
+                    opt.disabled = true;
+                    opt.text = opt.text + " (닫힘)";
+                }
+            }
+        }
 
         // 비밀번호 체크 로직
         function checkPassword() {
@@ -166,6 +193,7 @@
                 // 비밀번호가 맞으면 인증 화면을 숨기고 메인 화면을 보여줌
                 document.getElementById('authContainer').style.display = 'none';
                 document.getElementById('mainContainer').style.display = 'block';
+                applyDisabledMenus();
             } else {
                 alert("🚨 비밀번호가 일치하지 않습니다.");
                 document.getElementById('adminPwd').value = '';
@@ -183,6 +211,12 @@
         function navigateToPage() {
             const selectBox = document.getElementById('menuSelect');
             const targetUrl = selectBox.value;
+
+            if (DISABLED_MENUS.includes(targetUrl)) {
+                alert("🚫 지금은 열려 있지 않은 메뉴입니다.");
+                selectBox.value = "";
+                return;
+            }
 
             if (targetUrl) {
                 window.open(targetUrl, '_blank');
