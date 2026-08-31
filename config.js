@@ -55,7 +55,10 @@ const SB_READY = !String(SUPABASE_URL).includes("여기에") && !String(SUPABASE
 
 /* 조회 : sbSelect('students', 'select=*&grade=eq.2') */
 async function sbSelect(table, query = 'select=*') {
-    const url = `${SUPABASE_URL}/rest/v1/${table}?${query}&t=${Date.now()}`;
+    // ⚠️ 수파베이스는 쿼리에 들어온 이름을 모두 '열 이름 필터'로 봅니다.
+    //    캐시 방지용 t=... 같은 값을 붙이면 조회가 실패하므로 넣지 않습니다.
+    //    (캐시는 아래 cache: 'no-store' 로 막습니다)
+    const url = `${SUPABASE_URL}/rest/v1/${table}?${query}`;
     const res = await fetch(url, { headers: SB_HEADERS, cache: 'no-store' });
     if (!res.ok) throw new Error(`[${table}] 조회 실패 (${res.status}) ${await res.text()}`);
     return await res.json();
