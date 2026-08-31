@@ -10,14 +10,14 @@
  *  수파베이스 → Project Settings → Data API → Project URL
  *  예: https://abcdefghijklmn.supabase.co
  */
-const SUPABASE_URL = "https://여기에_프로젝트_주소.supabase.co";
+const SUPABASE_URL = "https://xkxqbowangecvotyxwsz.supabase.co";
 
 
 /** [2] 수파베이스 anon key (public)
  *  수파베이스 → Project Settings → API Keys → anon public
  *  ⚠️ service_role 키는 절대 여기에 넣지 마세요. (브라우저에 그대로 노출됩니다)
  */
-const SUPABASE_ANON_KEY = "여기에_anon_public_키_붙여넣기";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhreHFib3dhbmdlY3ZvdHl4d3N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NTEwNDEsImV4cCI6MjA5NDMyNzA0MX0.LvNmU2zzN70VnHvIIxv0hGZxvjUE2HlLKc5H-inSQLM";
 
 
 /** ============================================================================
