@@ -634,6 +634,7 @@
         let studentInfoText = "";
         let polyCoeffs = [];      // 산출된 다항함수 계수 (내림차순)
         let polyOrder = 0;        // 3 또는 4
+        let xBase = 0;            // x가 연도처럼 큰 수일 때 빼 주는 기준값 (0이면 이동 없음)
 
         /** 본문에서 분석 영역을 고르면 상단 안내 문구를 갱신 **/
         function updateArea() {
@@ -663,13 +664,18 @@
             }
             pts.sort((a, b) => a[0] - b[0]);
 
+            /** x가 연도처럼 큰 수이면 기준값을 빼서 0, 1, 2 … 로 계산합니다.
+             *  (계산만 이동하고 그래프의 x축 눈금은 원래 연도로 표시합니다.) **/
+            xBase = computeXBase(pts);
+            const fitPts = pts.map(p => [p[0] - xBase, p[1]]);
+
             /** 다항 회귀 후 모든 계수를 소수 첫째 자리로 반올림 **/
-            const raw = regression.polynomial(pts, { order: order, precision: 10 });
+            const raw = regression.polynomial(fitPts, { order: order, precision: 10 });
             polyCoeffs = raw.equation.map(v => Math.round(v * 10) / 10);   // 내림차순 [최고차 ... 상수]
             polyOrder = order;
 
             if (Math.abs(polyCoeffs[0]) < 0.05) {
-                alert("최고차항의 계수가 0.0으로 반올림되었습니다.\n\nx의 값을 1, 2, 3 … 처럼 작은 수(예: 연도 대신 경과 연수)로 바꾸어 다시 입력하세요.");
+                alert("최고차항의 계수가 0.0으로 반올림되었습니다.\n\ny의 값이 너무 크거나 작아서 생기는 현상입니다.\ny의 단위를 바꾸어(예: 1000명 → 1, 원 → 만 원) 다시 입력하세요.");
                 return;
             }
 
@@ -678,14 +684,40 @@
 
             const latexFormula = `\\( f(x) = ${polyLatex(polyCoeffs, order)} \\)`;
 
+            const baseNote = xBase
+                ? `<div style="margin-top:8px; font-size:0.92em; color:#7f8c8d;">
+                       여기서 <b>x = (연도 &minus; ${xBase})</b> 입니다.
+                       (x = 0 → ${xBase}년, x = 1 → ${xBase + 1}년, x = 2 → ${xBase + 2}년 …)<br>
+                       그래프의 가로축 눈금은 실제 연도로 표시됩니다.
+                   </div>`
+                : '';
+
             const formulaDiv = document.getElementById('outFormula');
-            formulaDiv.innerHTML = `<b>산출된 ${area}</b><br>${latexFormula}`;
+            formulaDiv.innerHTML = `<b>산출된 ${area}</b><br>${latexFormula}${baseNote}`;
             MathJax.typesetPromise([formulaDiv]);
 
             document.getElementById('analysisArea').style.display = 'block';
-            drawChart(pts, res);
+            drawChart(fitPts, res);
 
             document.getElementById('analysisArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /** x가 연도처럼 큰 수인지 확인하고, 빼 줄 기준값을 정합니다.
+         *  - 1000~3000 사이의 정수(연도)이면 가장 작은 값을 기준으로 삼습니다.
+         *  - 그 밖에도 값은 큰데 변화 폭이 좁으면 기준값을 잡아 줍니다.
+         *  - 이동이 필요 없으면 0을 돌려줍니다. **/
+        function computeXBase(pts) {
+            const xs = pts.map(p => p[0]);
+            const minX = Math.min(...xs), maxX = Math.max(...xs);
+            const span = maxX - minX;
+            if (span <= 0) return 0;
+
+            const looksLikeYear = xs.every(v => Number.isInteger(v) && v >= 1000 && v <= 3000);
+            if (looksLikeYear && span <= 300) return minX;
+
+            if (Math.abs(minX) >= 100 && Math.abs(minX) / span >= 10) return Math.round(minX);
+
+            return 0;
         }
 
         /** 다항식 값 계산 (계수는 내림차순) **/
@@ -722,6 +754,13 @@
             return polyPlain(c, topPower).replace(/<sup>(\d+)<\/sup>/g, '^$1');
         }
 
+        /** 계산용 x값을 화면 표시용(원래 연도)으로 되돌립니다. **/
+        function xLabel(v) {
+            const real = v + xBase;
+            return Number.isInteger(real) ? String(real) : real.toFixed(1);
+        }
+
+        /** pts는 기준값을 뺀 뒤의 점들입니다. **/
         function drawChart(pts, res) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
@@ -746,7 +785,32 @@
                         { type: 'line', label: '추세선', data: trend, borderColor: '#e74c3c', borderWidth: 3, pointRadius: 0, fill: false, tension: 0.4 }
                     ]
                 },
-                options: { scales: { x: { type: 'linear', position: 'bottom' }, y: { type: 'linear' } } }
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: !!xBase,
+                                text: xBase ? `연도  (식에서는 x = 연도 - ${xBase})` : ''
+                            },
+                            ticks: {
+                                // 계산은 0, 1, 2 …로 하고 눈금만 원래 연도로 보여 줍니다.
+                                callback: v => xBase ? xLabel(v) : v
+                            }
+                        },
+                        y: { type: 'linear' }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: c => xBase
+                                    ? `${xLabel(c.parsed.x)}년 (x = ${c.parsed.x}) , y = ${c.parsed.y}`
+                                    : `x = ${c.parsed.x} , y = ${c.parsed.y}`
+                            }
+                        }
+                    }
+                }
             });
         }
 
@@ -798,7 +862,9 @@
                 ref3: refs[2].value,
                 reason: document.getElementById('reason').value,
                 data_points: ptsArr.join(', '),
-                formula: polyCoeffs.length ? `f(x) = ${polyPlainText(polyCoeffs, polyOrder)}` : '',
+                formula: polyCoeffs.length
+                    ? `f(x) = ${polyPlainText(polyCoeffs, polyOrder)}` + (xBase ? ` (x = 연도 - ${xBase})` : '')
+                    : '',
                 obs1: document.getElementById('obs1').value,
                 obs2: document.getElementById('obs2').value,
                 submit_type: type,
